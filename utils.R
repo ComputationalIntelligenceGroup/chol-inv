@@ -7,14 +7,15 @@
 chol_inv <- function(coeffs) {
 	o <- diag(nrow(coeffs))
 	dimnames(o) <- list(rownames(coeffs), colnames(coeffs))
+	p <- ncol(o)
 
-	for (i in 2:ncol(o)) {
-		o[i, i - 1] <- - coeffs[i, i - 1]
+	for (i in 2:p) {
+		o[i, i - 1] <- coeffs[i, i - 1]
 	}
 
-	for (i in 3:nrow(o)) {
-		for (j in 1:(i - 2)) {
-			o[i, j] <- - coeffs[i, j] -
+	for (j in 1:(p - 2)) {
+		for (i in (j + 2):p) {
+			o[i, j] <- coeffs[i, j] +
 				coeffs[i, (j + 1):(i - 1)] %*%
 					o[(j + 1):(i - 1), j]
 		}
@@ -24,7 +25,8 @@ chol_inv <- function(coeffs) {
 }
 
 get_norms <- function(U, D, dag) {
-	L <- chol_inv(U)
+	p <- ncol(U)
+	L <- chol_inv(diag(p) - U)
 	tryCatch(L_solve <- solve(U), error = function(e) { print(e) })
 	tryCatch(L_true <- solve(diag(p) - pcalg::wgtMatrix(dag)),
 					 error = function(e) { print(e) })

@@ -19,17 +19,7 @@ for (i in 1:rep) {
 			print(e)
 			error_chol <- error_chol + 1
 		})
+	print(norm(o_chol - o_solve))
 }
 
-##### Second experiment -> Estimated regression coefficients
-
-#N <- 50
-#dag <- pcalg::randomDAG(n = p, prob = d)
-#data <- pcalg::rmvDAG(n = N, dag = dag)
-
-# Maximum likelihood estimation via regression
-#dag_am <- ggm::grMAT(dag)
-
-#colnames(data) <- colnames(data, do.NULL = FALSE, prefix = "")
-#fit_ggm <- ggm::fitDag(dag_am, cov(data), N)
-#norms_ggm <- get_norms(U = fit_ggm$Ahat, D = diag(fit_ggm$Dhat), dag = dag)
+#tryCatch(S_true <- pcalg::trueCov(dag), error = function(e) { print(e) })

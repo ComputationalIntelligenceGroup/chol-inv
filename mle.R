@@ -13,7 +13,6 @@ for (i in 1:rep) {
 
 	# Maximum likelihood estimation via regression
 	dag_am <- ggm::grMAT(dag)
-	colnames(data) <- colnames(data, do.NULL = FALSE, prefix = "")
 	fit <- ggm::fitDag(dag_am, cov(data), N)
 	L <- fit$Ahat
 	D <- solve(diag(fit$Dhat))

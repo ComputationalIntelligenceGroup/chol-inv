@@ -23,3 +23,49 @@ chol_inv <- function(coeffs) {
 
 	return(o)
 }
+
+fit_o <- function(dag, data) {
+
+	p <- graph::numNodes(dag)
+
+	B <- diag(p)
+	colnames(B) <- rownames(B) <- 1:p
+	for (i in 2:p) {
+		dag_rev <- graph::reverseEdgeDirections(dag)
+		edge_list <- dag_rev@edgeL[[i]]$edges
+		parents <- edge_list[edge_list < i] #sobra
+		if (length(parents) > 0) {
+			model <- lm(data[, i] ~ data[, parents])
+			B[i, parents] <- - model$coefficients[-1]
+		}
+	}
+	
+	return(B)
+}
+
+fit_oinv <- function(dag, data) {
+	p <- graph::numNodes(dag)
+
+	B <- diag(p)
+	colnames(B) <- rownames(B) <- 1:p
+	for (i in 2:p) {
+		dag_rev <- graph::reverseEdgeDirections(dag)
+		parents <- dag_rev@edgeL[[i]]$edges
+		for (j in 1:(i - 1)) {
+			if (length(parents) == 0) { 
+				B[i, j] <- 0
+			} else if (parents[length(parents)] < j) {
+				B[i, j] <- 0
+			} else if (parents[length(parents)] == j) {
+				model <- lm(data[, i] ~ data[, parents])
+				B[i, j] <- model$coefficients[length(model$coefficients)]
+			} else {
+				model <- lm(data[, i] ~ data[, 1:j])
+				B[i, j] <- model$coefficients[j + 1]
+			}
+		}
+	}
+	
+	return(B)
+}
+

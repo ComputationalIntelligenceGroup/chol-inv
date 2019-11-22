@@ -57,11 +57,11 @@ fit_oinv <- function(dag, data) {
 			} else if (parents[length(parents)] < j) {
 				B[i, j] <- 0
 			} else if (parents[length(parents)] == j) {
-				model <- lm(data[, i] ~ data[, parents])
+				model <- lm(data[, i] ~ data[, parents] - 1)
 				B[i, j] <- model$coefficients[length(model$coefficients)]
 			} else {
-				model <- lm(data[, i] ~ data[, 1:j])
-				B[i, j] <- model$coefficients[j + 1]
+				model <- lm(data[, i] ~ data[, 1:j] - 1)
+				B[i, j] <- model$coefficients[j]
 			}
 		}
 	}

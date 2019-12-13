@@ -1,6 +1,6 @@
 source("utils.R")
 
-##### Second experiment -> Estimated regression coefficients with standard MLE
+##### Third experiment -> 
 p <- 1000
 d <- 0.025
 N <- 2000
@@ -10,10 +10,14 @@ error_inv <- 0
 for (i in 1:rep) {
 	dag <- pcalg::randomDAG(n = p, prob = d)
 	data <- pcalg::rmvDAG(n = N, dag = dag)
+	pdag_learned <- pcalg::pc(suffStat = list(C = cov(data), n = p),
+							indepTest = pcalg::gaussCItest,
+							alpha = 0.01,
+							p = p)
+	dag_learned <- pcalg::pdag2dag(pdag_learned@graph)$graph
 
 	# Maximum likelihood estimation via regression
-	dag_am <- ggm::grMAT(dag)
-	fit <- ggm::fitDag(dag_am, cov(data), N)
+	O_solve <- solve(fito(dag, data)
 	L <- fit$Ahat
 	D <- solve(diag(fit$Dhat))
 	

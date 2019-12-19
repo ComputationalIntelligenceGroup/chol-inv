@@ -1,4 +1,5 @@
 source("utils.R")
+library("ggplot2")
 
 devtools::install_github("irenecrsn/ggmexp")
 
@@ -19,6 +20,7 @@ true <- function(p, d) {
 		return(norm(O_inv_chol - O_inv_solve))
 	}, 
 		error = function(e) {
+		print(paste0("Error at p = ", p, " and d = ", d, ":"))
 		print(e)
 		return(NA)
 	})
@@ -94,10 +96,10 @@ pcmle <- function(p, d, N) {
 }
 
 wd <- getwd()
-plot_dname <- "plot_solve"
+plot_dname <- "plot_true"
 dir.create(paste0(wd, "/", plot_dname), showWarnings = FALSE)
 ggmexp::execute(p = p, d = d, r = r, experiment = true)
-pl <- ggmexp::plot_map_reduce(p = p, d = d, reduce = mean, exp_name = "true") 
+pl <- ggmexp::plot_map_reduce(p = p, d = d, r = r, N = 1, reduce = mean, exp_name = "true") 
 pl <- pl + ylab("") + ggtitle("")
 ggsave(filename = "true.pdf", plot = pl, device = "pdf", path = plot_dname)
 

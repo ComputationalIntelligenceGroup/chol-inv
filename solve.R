@@ -1,7 +1,7 @@
-source("utils.R")
+library("ggplot2")
 
 devtools::install_github("irenecrsn/ggmexp")
-library(ggmexp)
+devtools::install_github("irenecrsn/covchol")
 
 r <- 10
 p <- c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 200, 250, 300, 400, 500, 750, 1000)
@@ -15,7 +15,7 @@ true <- function(p, d) {
 	res <- tryCatch(
 	{
 		O_inv_solve <- solve(L)
-		O_inv_chol <- chol_inv(B)	
+		O_inv_chol <- covchol::chol_inv(B)	
 
 		norm(O_inv_chol - O_inv_solve)
 	}, 

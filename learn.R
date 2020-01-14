@@ -1,49 +1,40 @@
 source("utils.R")
 
-##### Third experiment -> 
-p <- 1000
-d <- 0.025
-N <- 2000
-rep <- 10
-error_solve <- 0
-error_inv <- 0
-for (i in 1:rep) {
-	dag <- pcalg::randomDAG(n = p, prob = d)
-	data <- pcalg::rmvDAG(n = N, dag = dag)
-	pdag_learned <- pcalg::pc(suffStat = list(C = cov(data), n = p),
-							indepTest = pcalg::gaussCItest,
-							alpha = 0.01,
-							p = p)
-	dag_learned <- pcalg::pdag2dag(pdag_learned@graph)$graph
+library("ggplot2")
 
-	# Maximum likelihood estimation via regression
-	O_solve <- solve(fito(dag, data)
-	L <- fit$Ahat
-	D <- solve(diag(fit$Dhat))
-	
-	# Calculating the inverse with the two methods
-	O_solve <- tryCatch(solve(L), error = function(e) {
-			print(e)
-			error_solve <- error_solve + 1
-		})
-	O_inv <- tryCatch(chol_inv(diag(p) - L), error = function(e)
+devtools::install_github("irenecrsn/ggmexp")
+devtools::install_github("irenecrsn/covchol")
+
+r <- 10
+p <- c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 200, 250, 300, 400, 500, 750, 1000)
+d <- c(0.0025, 0.005, 0.025, 0.05, 0.25, 0.5)
+
+##### First experiment -> True regression coefficients available
+learn_chol_cov <- function(p, d) {
+	dag <- pcalg::randomDAG(n = p, prob = d)
+	B <- pcalg::wgtMatrix(dag)
+	L <- diag(p) - B
+	res <- tryCatch(
 		{
+			O_inv_solve <- solve(L)
+			O_inv_chol <- covchol::chol_inv(B)	
+			
+			norm(O_inv_chol - O_inv_solve)
+		}, 
+		error = function(e) {
+			print(paste0("Error at p = ", p, " and d = ", d, ":"))
 			print(e)
-			error_inv <- error_inv + 1
+			return(NA)
 		})
 	
-	S_true <- pcalg::trueCov(dag)
-	S_inv <- O_inv %*% D %*% t(O_inv)
-	S_solve <- O_solve %*% D %*% t(O_solve)
-	
-	norms <- eval(formals(base::norm)$type)
-	
-	norm_inv_solve <- sapply(norms, norm, x = S_inv - S_solve)
-	norm_inv_true <- sapply(norms, norm, x = S_inv - S_true)
-	norm_solve_true <- sapply(norms, norm, x = S_solve - S_true)
-	
-	S_norms <- data.frame(norm_inv_solve, norm_inv_true, norm_solve_true)
-	
-	print(S_norms)
-	print(norm(O_inv - O_solve))
+	return(res)
 }
+
+wd <- getwd()
+plot_dname <- "plot_true"
+dir.create(paste0(wd, "/", plot_dname), showWarnings = FALSE)
+ggmexp::execute(p = p, d = d, r = r, experiment = true)
+
+pl <- ggmexp::plot_map_reduce(p = p, d = d, r = 1, N = 1, reduce = mean, exp_name = "true") 
+pl <- pl + ylab("") + ggtitle("")
+ggsave(filename = "true.pdf", plot = pl, device = "pdf", path = plot_dname)

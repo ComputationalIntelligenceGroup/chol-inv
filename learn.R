@@ -18,11 +18,11 @@ learn_chol_conc <- function(p, d, N) {
 	return(norm(chol_conc_fit - chol_conc_true))
 }
 
+ggmexp::execute(p = p, d = d, r = r, experiment = learn_chol_conc, N = 2*p)
+
 wd <- getwd()
 plot_dname <- "plot_comp_true"
 dir.create(paste0(wd, "/", plot_dname), showWarnings = FALSE)
-ggmexp::execute(p = p, d = d, r = r, experiment = learn_chol_conc, N = 2*p)
-
 pl <- ggmexp::plot_map_reduce(p = p, d = d, r = 1, N = 1, reduce = mean, exp_name = "comp_true") 
 pl <- pl + ylab("") + ggtitle("")
 ggsave(filename = "comp_true.pdf", plot = pl, device = "pdf", path = plot_dname)

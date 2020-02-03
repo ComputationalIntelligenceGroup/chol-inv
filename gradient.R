@@ -23,7 +23,7 @@ execute_experiment <- function(p, r, ename, emethod, ...) {
 }
 
 p <- c(10, 30, 50, 100)
-r <- 50
+r <- 200
 
 #p <- 5; d <- 0.5; n <- 100
 
@@ -42,9 +42,9 @@ sparse_chol <- function(p, d) {
 	
 	Cortrain <- cor(X[1:train, ])
 
-	llpath <- covchol::llpathL(Sigma = Cortrain)
+	llpath <- covchol::cholpath(Sigma = Cortrain)
 	frobs <- lapply(X = llpath, FUN = function(res) {
-		ldebias <- covchol::proxgradL(Sigma = Cortrain, L = res$L, lambda = 0, eps = 1e-10)
+		ldebias <- covchol::prxgradchol(Sigma = Cortrain, L = res$L, lambda = 0, eps = 1e-10)
 		norm(ldebias$L %*% t(ldebias$L) - cor(X[(train + 1):n, ]), type = "F")
 	})
 
@@ -56,8 +56,7 @@ sparse_chol <- function(p, d) {
 
 band_chol <- function(p, d) {
 	n <- 2*p
-	res <- list()
-	
+
 	Ltrue <- covchol::rlower(p = p, d = d)
 	diag(Ltrue) <- 1
 	Sigmatrue <- Ltrue %*% t(Ltrue)
@@ -70,5 +69,21 @@ band_chol <- function(p, d) {
 	return(list("ltrue" = Ltrue, "lest" = Lest))
 }
 
+gbn_chol <- function(p, d) {
+	n <- 2*p
+
+	Ltrue <- covchol::rlower(p = p, d = d)
+	diag(Ltrue) <- 1
+	Sigmatrue <- Ltrue %*% t(Ltrue)
+	
+	X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+	
+	Sigmaest <- PDSCE::band.chol.cv(x = X)$sigma
+	Lest <- zapsmall(t(chol(Sigmaest)))
+	
+	return(list("ltrue" = Ltrue, "lest" = Lest))
+}
+
 execute_experiment(p = p, r = r, ename = "sparse_chol", emethod = sparse_chol)
 execute_experiment(p = p, r = r, ename = "band_chol", emethod = band_chol)
+execute_experiment(p = p, r = r, ename = "gbn_chol", emethod = gbn_chol)

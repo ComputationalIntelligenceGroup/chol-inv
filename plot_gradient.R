@@ -95,7 +95,7 @@ plot_comparison <- function(df, plot_title = "", plot_ylab = "", ename) {
 
 df <- get_statistics(p = p, r = r, ename = c("sparse_chol", "band_chol"))
 pl <- plot_comparison(df, ename = c("sparse_chol", "band_chol"))
-ggplot2::ggsave(filename = "stats.pdf", plot = pl, device = "pdf", width = 11, height = 7,
+ggplot2::ggsave(filename = "stats.pdf", plot = pl, device = "pdf", width = 11, height = 9,
 								path = "../sparsecholeskycovariance/img/")
 
 

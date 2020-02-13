@@ -43,8 +43,7 @@ sparse_chol <- function(p, d) {
 
 	llpath <- covchol::cholpath(Sigma = Cortrain)
 	frobs <- lapply(X = llpath, FUN = function(res) {
-		ldebias <- covchol::prxgradchol(Sigma = Cortrain, L = res$L, lambda = 0, eps = 1e-10)
-		norm(ldebias$L %*% t(ldebias$L) - Cortest, type = "F")
+		norm(res$L %*% t(res$L) - Cortest, type = "F")
 	})
 
 	Lest <- llpath[[which.min(frobs)]]$L

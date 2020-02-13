@@ -13,11 +13,8 @@ stat_tnr <- function(ltrue, lest) {
 	tn <- sum(ltrue == 0 & lest == 0) - p*(p - 1)/2
 	return(tn/(sum(ltrue == 0) - (p * (p - 1) / 2)))
 }
-stat_acc <- function(ltrue, lest) {
-	p <- ncol(ltrue)
-	tp <- sum(ltrue != 0 & lest != 0) - p
-	tn <- sum(ltrue == 0 & lest == 0) - p*(p - 1)/2
-	return((tp + tn)/(p*(p - 1)/2))
+stat_frob <- function(ltrue, lest) {
+	return(norm(lest - ltrue, type = "F"))
 }
 stat_f1 <- function(ltrue, lest) {
 	p <- ncol(ltrue)
@@ -30,7 +27,7 @@ stat_f1 <- function(ltrue, lest) {
 get_statistics <- function(p, r, ename) {
 	fstat <- c("tpr" = stat_tpr,
 						 "tnr" = stat_tnr,
-						 "acc" = stat_acc,
+						 "frob" = stat_frob,
 						 "f1" = stat_f1)
 	data <- array(
 		dim = c(length(p), 3, length(ename), length(fstat)),
@@ -79,10 +76,11 @@ plot_comparison <- function(df, plot_title = "", plot_ylab = "", ename) {
 							 labeller = labeller(fstat = toupper, d = lab_densities)) +
 		geom_line(aes(color = ename)) +
 		geom_point(aes(color = ename)) +
+		theme_bw() +
 		theme(text = element_text(size = 20), legend.position = "bottom") +
 		xlab("Number of nodes (p)") +
-		ylab("")
-
+		ylab("") 
+	
 		pl <- pl +
 			geom_ribbon(aes(ymin = data - data_sd, ymax = data + data_sd, fill = ename),
 									alpha = .2) +

@@ -2,7 +2,7 @@ library("ggplot2")
 library("dplyr")
 
 r <- 200
-p <- c(10, 30, 50, 100)
+p <- c(10, 30, 50, 100, 200, 500, 1000)
 
 stat_tpr <- function(ltrue, lest) {
 	p <- ncol(ltrue)
@@ -73,7 +73,8 @@ plot_comparison <- function(df, plot_title = "", plot_ylab = "", ename) {
 	
 	pl <- ggplot(df, aes(x = p, y = data, group = ename)) +
 		facet_grid(cols = vars(d), rows = vars(fstat), 
-							 labeller = labeller(fstat = toupper, d = lab_densities)) +
+							 labeller = labeller(fstat = toupper, d = lab_densities),
+							 scales = "free") +
 		geom_line(aes(color = ename)) +
 		geom_point(aes(color = ename)) +
 		theme_bw() +

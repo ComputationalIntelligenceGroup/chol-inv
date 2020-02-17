@@ -22,50 +22,41 @@ execute_experiment <- function(p, r, ename, emethod, ...) {
 	parallel::stopCluster(cl)
 }
 
-p <- c(10, 30, 50, 100)
+p <- c(30, 100, 200, 500, 1000)
 r <- 200
 
 ##### Gradient experiment
-sparse_chol <- function(p, d) {
-	n <- 20*p
-	res <- list()
-	
+sparse_chol <- function(p, d, n, ntrain) {
+
 	Ltrue <- covchol::rlower(p = p, d = d)
 	diag(Ltrue) <- runif(p, 0.1, 1)
-	Sigmatrue <- Ltrue %*% t(Ltrue)
 
-	X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
-	train <- floor(n/2)
-	Cortrue <- cov2cor(Sigmatrue)
-	
-	Cortrain <- cor(X[1:train, ])
-	Cortest <- cor(X[(train + 1):n, ])
+	X <- MASS::mvrnorm(n, rep(0, p), Sigma = Ltrue %*% t(Ltrue))
+	Covtest <- cov(X[(ntrain + 1): n, ])
+	Ltest <- t(zapsmall(chol(Covtest, pivot = TRUE)))
 
-	llpath <- covchol::cholpath(Sigma = Cortrain)
+	llpath <- covchol::cholpath(X = X[1:ntrain, ])
 	frobs <- lapply(X = llpath, FUN = function(res) {
-		norm(res$L %*% t(res$L) - Cortest, type = "F")
+		norm(res$L - Ltest, type = "F")
 	})
 
 	Lest <- llpath[[which.min(frobs)]]$L
-	Corest <- Lest %*% t(Lest)
-	
+
 	return(list("ltrue" = Ltrue, "lest" = Lest))
 }
 
-band_chol <- function(p, d) {
-	n <- 2*p
-
+band_chol <- function(p, d, n, ntrain) {
 	Ltrue <- covchol::rlower(p = p, d = d)
 	diag(Ltrue) <- runif(p, 0.1, 1)
 	Sigmatrue <- Ltrue %*% t(Ltrue)
 	
 	X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 	
-	Sigmaest <- PDSCE::band.chol.cv(x = X)$sigma
-	Lest <- zapsmall(t(chol(Sigmaest)))
+	Sigmaest <- PDSCE::band.chol.cv(x = X, n.tr = ntrain)$sigma
+	Lest <- zapsmall(t(chol(Sigmaest, pivot = TRUE)))
 		
 	return(list("ltrue" = Ltrue, "lest" = Lest))
 }
 
-execute_experiment(p = p, r = r, ename = "sparse_chol", emethod = sparse_chol)
-execute_experiment(p = p, r = r, ename = "band_chol", emethod = band_chol)
+#execute_experiment(p = p, r = r, ename = "sparse_chol", emethod = sparse_chol, n = 200, ntrain = 100)
+execute_experiment(p = p, r = r, ename = "band_chol", emethod = band_chol, n = 200, ntrain = 100)

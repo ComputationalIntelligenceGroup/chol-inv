@@ -1,37 +1,16 @@
 library("ggplot2")
 library("dplyr")
 
-
-stat_tpr <- function(ltrue, lest) {
-	p <- ncol(ltrue)
-	return((sum(ltrue != 0 & lest != 0) - p)/(sum(ltrue != 0) - p))
-}
-stat_tnr <- function(ltrue, lest) {
-	p <- ncol(ltrue)
-	tn <- sum(ltrue == 0 & lest == 0) - p*(p - 1)/2
-	return(tn/(sum(ltrue == 0) - (p * (p - 1) / 2)))
-}
-stat_frob <- function(ltrue, lest) {
-	return(norm(lest - ltrue, type = "F"))
-}
-stat_f1 <- function(ltrue, lest) {
-	p <- ncol(ltrue)
-	tp <- sum(ltrue != 0 & lest != 0) - p
-	fn <- sum(ltrue != 0 & lest == 0)
-	fp <- sum(ltrue == 0 & lest != 0)
-	return(2*tp/(2*tp + fp + fn))
-}
-
 get_frobs_sigma_exp <- function(p, r) {
 
 	methods <- c("sparse", "band")
 	frobs <- array(
 		dim = c(length(p), 3, length(methods)),
-		dimnames = list(p = p, d = 1:3)
+		dimnames = list(p = p, d = 1:3, methods = methods)
 	)
 	frobs_sd <- array(
 		dim = c(length(p), 3, length(methods)),
-		dimnames = list(p = p, d = 1:3)
+		dimnames = list(p = p, d = 1:3, methods = methods)
 	)
 	frobs_res <- matrix(nrow = r, ncol = 2, 
 											dimnames = list(r = 1:r, method = c("sparse", "band")))
@@ -41,8 +20,8 @@ get_frobs_sigma_exp <- function(p, r) {
 		for (j in seq_along(d)) {
 			for (k in 1:r) {
 				res <- readRDS(file = paste0("sigma_exp/", p[i], "_", d[j], "_r", k, ".rds"))
-				frobs_res[k, "sparse"] <- stat_frob(res$sigmatrue, res$sigmasparse) 
-				frobs_res[k, "band"] <- stat_frob(res$sigmatrue, res$sigmaband) 
+				frobs_res[k, "sparse"] <- norm(res$sigmatrue - res$sigmasparse, type = "F") 
+				frobs_res[k, "band"] <- norm(res$sigmatrue - res$sigmasparse, type = "F")
 
 				frobs[i, j, "sparse"] <- stats::mean(frobs_res[, "sparse"])
 				frobs[i, j, "band"] <- stats::mean(frobs_res[, "band"])

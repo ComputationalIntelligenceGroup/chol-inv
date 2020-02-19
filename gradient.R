@@ -64,7 +64,7 @@ rothman_exp <- function(repetition, nodes, n, ntrain) {
 			}
 		}
 		
-		Lest1band <- band_est(n, ntrain, Sigmatrue = sigma1)
+		Sigma1band <- band_est(n, ntrain, Sigmatrue = sigma1)
 		Lest1sparse <- gradient_est(n, ntrain, Sigmatrue = sigma1)
 		
 		sigma2 <- matrix(ncol = p,
@@ -86,7 +86,7 @@ rothman_exp <- function(repetition, nodes, n, ntrain) {
 		}
 		diag(sigma2) <- 1
 		
-		Lest2band <- band_est(n, ntrain, Sigmatrue = sigma2)
+		Sigma2band <- band_est(n, ntrain, Sigmatrue = sigma2)
 		Lest2sparse <- gradient_est(n, ntrain, Sigmatrue = sigma2)
 		
 		sigma3 <- matrix(ncol = p,
@@ -94,19 +94,31 @@ rothman_exp <- function(repetition, nodes, n, ntrain) {
 										 data = 0.5)
 		diag(sigma3) <- 1
 		
-		Lest3band <- band_est(n, ntrain, Sigmatrue = sigma3)
+		Sigma3band <- band_est(n, ntrain, Sigmatrue = sigma3)
 		Lest3sparse <- gradient_est(n, ntrain, Sigmatrue = sigma3)
 		
-		result <-	list(
-				"Lest1band" = Lest1band,
-				"Lest2band" = Lest2band,
-				"Lest3band" = Lest3band,
-				"Lest1sparse" = Lest1sparse,
-				"Lest2sparse" = Lest2sparse,
-				"Lest3sparse" = Lest3sparse
+		result1 <-	list(
+				"sigmaband" = Sigma1band,
+				"sigmasparse" = Lest1sparse %*% t(Lest1sparse),
+				"sigmatrue" = sigma1,
 			)
-		saveRDS(result,
-						file = paste0("rothman_exp/", p, "_r", repetition, ".rds"))
+		result2 <-	list(
+			"sigmaband" = Sigma2band,
+			"sigmasparse" = Lest2sparse %*% t(Lest2sparse),
+			"sigmatrue" = sigma2,
+		)
+		result3 <-	list(
+			"sigmaband" = Sigma3band,
+			"sigmasparse" = Lest3sparse %*% t(Lest3sparse),
+			"sigmatrue" = sigma3
+		)
+		
+		saveRDS(result1,
+						file = paste0("rothman_exp/sigma1_", p, "_r", repetition, ".rds"))
+		saveRDS(result2,
+						file = paste0("rothman_exp/sigma2_", p, "_r", repetition, ".rds"))
+		saveRDS(result3,
+						file = paste0("rothman_exp/sigma3_", p, "_r", repetition, ".rds"))
 	}
 }
 
@@ -121,7 +133,6 @@ execute_experiment <- function(r, ename, emethod, ...) {
 		dir.create(ename, showWarnings = FALSE)
 		
 		emethod(repetition = repetition, ...)
-		
 
 	})
 	
@@ -129,5 +140,5 @@ execute_experiment <- function(r, ename, emethod, ...) {
 }
 
 nodes <- c(30, 100, 200, 500, 1000)
-#execute_experiment(r = 200, ename = "sigma_exp", emethod = sigma_exp, nodes = nodes, n = 200, ntrain = 100)
-execute_experiment(r = 200, ename = "rothman_exp", emethod = rothman_exp, nodes = nodes, n = 200, ntrain = 100)
+execute_experiment(r = 200, ename = "sigma_exp", emethod = sigma_exp, nodes = nodes, n = 200, ntrain = 100)
+#execute_experiment(r = 200, ename = "rothman_exp", emethod = rothman_exp, nodes = nodes, n = 200, ntrain = 100)

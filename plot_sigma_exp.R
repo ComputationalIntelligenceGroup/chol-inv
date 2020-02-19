@@ -93,5 +93,4 @@ df <- get_frobs_sigma_exp(p = p, r = r)
 pl <- plot_sigma_exp(df)
 ggplot2::ggsave(filename = "sigma_exp.pdf", plot = pl, device = "pdf", width = 11, height = 9,
 								path = "../sparsecholeskycovariance/img/")
-
 	

@@ -86,18 +86,15 @@ plot_comparison <- function(df, plot_title = "", plot_ylab = "", ename) {
 			geom_ribbon(aes(ymin = data - data_sd, ymax = data + data_sd, fill = ename),
 									alpha = .2) +
 			labs(fill = "Method", color = "Method") +
-			scale_fill_discrete(labels = c("Banding", "Likelihood")) +
-			scale_color_discrete(labels = c("Banding", "Likelihood"))
+			scale_fill_discrete(labels = c("Likelihood")) +
+			scale_color_discrete(labels = c("Likelihood"))
 	
 	return(pl)
 }
 
-df <- get_statistics(p = p, r = r, ename = c("sparse_chol", "band_chol"))
-pl <- plot_comparison(df, ename = c("sparse_chol", "band_chol"))
-ggplot2::ggsave(filename = "stats.pdf", plot = pl, device = "pdf", width = 11, height = 9,
+df <- get_statistics(p = p, r = r, ename = c("sparse_chol"))
+pl <- plot_comparison(df, ename = c("sparse_chol"))
+ggplot2::ggsave(filename = "l_exp.pdf", plot = pl, device = "pdf", width = 11, height = 9,
 								path = "../sparsecholeskycovariance/img/")
-
-
-################################################
 
 	

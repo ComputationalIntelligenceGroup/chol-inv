@@ -23,7 +23,7 @@ gradient_est <- function(n, ntrain, X) {
 	
 	Lest <- llpath[[which.min(frobs)]]$L
 	
-	return(Lest %*% t(Lest))
+	return(Lest)
 }
 
 # for comparison of sigmas instead of l factors
@@ -35,11 +35,11 @@ sigma_exp <- function(repetition, nodes, n, ntrain) {
 			diag(Ltrue) <- runif(p, 0.1, 1)
 			Sigmatrue <- Ltrue %*% t(Ltrue)
 			
-			p <- ncol(Sigmatrue)
 			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 			
-			Sigmasparse <- gradient_est(n, ntrain, X = X)
+			Lsparse <- gradient_est(n, ntrain, X = X)
 			Sigmaband <- band_est(n, ntrain, X = X)
+			Sigmasparse <- Lsparse %*% t(Lsp)
 			
 			result <- list("sigmatrue" = Sigmatrue, 
 									"sigmasparse" = Sigmasparse,
@@ -64,8 +64,9 @@ rothman_exp <- function(repetition, nodes, n, ntrain) {
 			}
 		}
 		
-		Sigma1band <- band_est(n, ntrain, Sigmatrue = sigma1)
-		Lest1sparse <- gradient_est(n, ntrain, Sigmatrue = sigma1)
+		X <- MASS::mvrnorm(n, rep(0, p), Sigma = sigma1)
+		Sigma1band <- band_est(n, ntrain, X = X)
+		Lest1sparse <- gradient_est(n, ntrain, X = X)
 		
 		sigma2 <- matrix(ncol = p,
 										 nrow = p,
@@ -86,16 +87,19 @@ rothman_exp <- function(repetition, nodes, n, ntrain) {
 		}
 		diag(sigma2) <- 1
 		
-		Sigma2band <- band_est(n, ntrain, Sigmatrue = sigma2)
-		Lest2sparse <- gradient_est(n, ntrain, Sigmatrue = sigma2)
+		X <- MASS::mvrnorm(n, rep(0, p), Sigma = sigma2)
+		Sigma2band <- band_est(n, ntrain, X = X)
+		Lest2sparse <- gradient_est(n, ntrain, X = X)
 		
 		sigma3 <- matrix(ncol = p,
 										 nrow = p,
 										 data = 0.5)
 		diag(sigma3) <- 1
 		
-		Sigma3band <- band_est(n, ntrain, Sigmatrue = sigma3)
-		Lest3sparse <- gradient_est(n, ntrain, Sigmatrue = sigma3)
+		
+		X <- MASS::mvrnorm(n, rep(0, p), Sigma = sigma3)
+		Sigma3band <- band_est(n, ntrain, X = X)
+		Lest3sparse <- gradient_est(n, ntrain, X = X)
 		
 		result1 <-	list(
 				"sigmaband" = Sigma1band,
@@ -122,6 +126,28 @@ rothman_exp <- function(repetition, nodes, n, ntrain) {
 	}
 }
 
+l_exp <- function(repetition, nodes, n, ntrain) {
+	for (p in nodes) {
+		densities <- c(1/p, 2/p, 3/p)
+		for (d in densities) {
+			Ltrue <- covchol::rlower(p = p, d = d)
+			diag(Ltrue) <- runif(p, 0.1, 1)
+			Sigmatrue <- Ltrue %*% t(Ltrue)
+			
+			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+			
+			Sigmasparse <- gradient_est(n, ntrain, X = X)
+			Sigmaband <- band_est(n, ntrain, X = X)
+			
+			result <- list("sigmatrue" = Sigmatrue, 
+										 "sigmasparse" = Sigmasparse,
+										 "sigmaband" = Sigmaband)		
+			saveRDS(result,
+							file = paste0("sigma_exp/", p, "_", d, "_r", repetition, ".rds"))
+		}
+	}
+}
+
 execute_experiment <- function(r, ename, emethod, ...) {
 	n_cores <- min(r, parallel::detectCores() - 2)
 	cl <- parallel::makeCluster(n_cores, outfile = "")
@@ -140,5 +166,5 @@ execute_experiment <- function(r, ename, emethod, ...) {
 }
 
 nodes <- c(30, 100, 200, 500, 1000)
-execute_experiment(r = 200, ename = "sigma_exp", emethod = sigma_exp, nodes = nodes, n = 200, ntrain = 100)
-#execute_experiment(r = 200, ename = "rothman_exp", emethod = rothman_exp, nodes = nodes, n = 200, ntrain = 100)
+#execute_experiment(r = 200, ename = "sigma_exp", emethod = sigma_exp, nodes = nodes, n = 200, ntrain = 100)
+execute_experiment(r = 200, ename = "rothman_exp", emethod = rothman_exp, nodes = nodes, n = 200, ntrain = 100)

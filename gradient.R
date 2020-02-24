@@ -1,19 +1,16 @@
 devtools::install_github("irenecrsn/covchol")
 
 # Returns an estimate of the covariance matrix
-band_est <- function(n, ntrain, Sigmatrue) {
-	p <- ncol(Sigmatrue)
-	X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
-	
+band_est <- function(n, ntrain, X) {
+
 	Sigmaest <- PDSCE::band.chol.cv(x = X, n.tr = ntrain)$sigma
 	
 	return(Sigmaest)
 }
 
 # Returns an estimate of the Cholesky factor
-gradient_est <- function(n, ntrain, Sigmatrue) {
-	p <- ncol(Sigmatrue)
-	X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+gradient_est <- function(n, ntrain, X) {
+
 	Covtest <- cov(X[(ntrain + 1):n,])
 	
 	llpath <- covchol::cholpath(X = X[1:ntrain,])
@@ -38,8 +35,11 @@ sigma_exp <- function(repetition, nodes, n, ntrain) {
 			diag(Ltrue) <- runif(p, 0.1, 1)
 			Sigmatrue <- Ltrue %*% t(Ltrue)
 			
-			Sigmasparse <- gradient_est(n, ntrain, Sigmatrue = Sigmatrue)
-			Sigmaband <- band_est(n, ntrain, Sigmatrue = Sigmatrue)
+			p <- ncol(Sigmatrue)
+			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+			
+			Sigmasparse <- gradient_est(n, ntrain, X = X)
+			Sigmaband <- band_est(n, ntrain, X = X)
 			
 			result <- list("sigmatrue" = Sigmatrue, 
 									"sigmasparse" = Sigmasparse,
@@ -100,12 +100,12 @@ rothman_exp <- function(repetition, nodes, n, ntrain) {
 		result1 <-	list(
 				"sigmaband" = Sigma1band,
 				"sigmasparse" = Lest1sparse %*% t(Lest1sparse),
-				"sigmatrue" = sigma1,
+				"sigmatrue" = sigma1
 			)
 		result2 <-	list(
 			"sigmaband" = Sigma2band,
 			"sigmasparse" = Lest2sparse %*% t(Lest2sparse),
-			"sigmatrue" = sigma2,
+			"sigmatrue" = sigma2
 		)
 		result3 <-	list(
 			"sigmaband" = Sigma3band,

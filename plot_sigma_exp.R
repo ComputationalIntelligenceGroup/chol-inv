@@ -3,17 +3,17 @@ library("dplyr")
 
 get_frobs_sigma_exp <- function(p, r) {
 
-	methods <- c("sparse", "band")
+	method <- c("sparse", "band")
 	frobs <- array(
-		dim = c(length(p), 3, length(methods)),
-		dimnames = list(p = p, d = 1:3, methods = methods)
+		dim = c(length(p), 3, length(method)),
+		dimnames = list(p = p, d = 1:3, method = method)
 	)
 	frobs_sd <- array(
-		dim = c(length(p), 3, length(methods)),
-		dimnames = list(p = p, d = 1:3, methods = methods)
+		dim = c(length(p), 3, length(method)),
+		dimnames = list(p = p, d = 1:3, method = method)
 	)
-	frobs_res <- matrix(nrow = r, ncol = 2, 
-											dimnames = list(r = 1:r, method = c("sparse", "band")))
+	frobs_res <- matrix(nrow = r, ncol = length(method), 
+											dimnames = list(r = 1:r, method = method))
 	
 	for (i in 1:length(p)) {
 		d <- c(1/p[i], 2/p[i], 3/p[i])
@@ -21,10 +21,10 @@ get_frobs_sigma_exp <- function(p, r) {
 			for (k in 1:r) {
 				res <- readRDS(file = paste0("sigma_exp/", p[i], "_", d[j], "_r", k, ".rds"))
 				frobs_res[k, "sparse"] <- norm(res$sigmatrue - res$sigmasparse, type = "F") 
-				frobs_res[k, "band"] <- norm(res$sigmatrue - res$sigmasparse, type = "F")
+				frobs_res[k, "band"] <- norm(res$sigmatrue - res$sigmaband, type = "F")
 
-				frobs[i, j, "sparse"] <- stats::mean(frobs_res[, "sparse"])
-				frobs[i, j, "band"] <- stats::mean(frobs_res[, "band"])
+				frobs[i, j, "sparse"] <- mean(frobs_res[, "sparse"])
+				frobs[i, j, "band"] <- mean(frobs_res[, "band"])
 
 				frobs_sd[i, j, "sparse"] <- stats::sd(frobs_res[, "sparse"])
 				frobs_sd[i, j, "band"] <- stats::sd(frobs_res[, "band"])
@@ -59,17 +59,17 @@ plot_sigma_exp <- function(df, plot_title = "", plot_ylab = "") {
 		pl <- pl +
 			geom_ribbon(aes(ymin = frobs - frobs_sd, ymax = frobs + frobs_sd, fill = method),
 									alpha = .2) +
-			labs(fill = "Method", color = "Method") +
-			scale_fill_discrete(labels = c("Banding", "Likelihood")) +
-			scale_color_discrete(labels = c("Banding", "Likelihood"))
+			labs(fill = "Method", color = "Method") #+
+			#scale_fill_discrete(labels = c("Banding", "Likelihood")) +
+			#scale_color_discrete(labels = c("Banding", "Likelihood"))
 	
 	return(pl)
 }
 
 r <- 200
-p <- c(10, 30, 50, 100, 200, 500, 1000)
+p <- c(30, 100, 200, 500, 1000)
 df <- get_frobs_sigma_exp(p = p, r = r)
 pl <- plot_sigma_exp(df)
-ggplot2::ggsave(filename = "sigma_exp.pdf", plot = pl, device = "pdf", width = 11, height = 9,
+ggplot2::ggsave(filename = "sigma_exp.pdf", plot = pl, device = "pdf", width = 12, height = 4,
 								path = "../sparsecholeskycovariance/img/")
 	

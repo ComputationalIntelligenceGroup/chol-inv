@@ -50,7 +50,7 @@ sigma_exp <- function(repetition, nodes, n, ntrain) {
 	}
 }
 
-# d is ignored in this experiment
+# 
 rothman_exp <- function(repetition, nodes, n, ntrain) {
 	
 	for (p in nodes) {

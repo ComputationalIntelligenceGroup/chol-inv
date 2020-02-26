@@ -24,27 +24,30 @@ stat_f1 <- function(ltrue, lest) {
 	return(2*tp/(2*tp + fp + fn))
 }
 
-get_statistics <- function(p, r, ename) {
+get_statistics <- function(p, r) {
 	fstat <- c("tpr" = stat_tpr,
 						 "tnr" = stat_tnr,
 						 "frob" = stat_frob,
 						 "f1" = stat_f1)
+	method <- c("lasso",
+							"nestedlasso",
+							"sparse")
 	data <- array(
-		dim = c(length(p), 3, length(ename), length(fstat)),
-		dimnames = list(p = p, d = 1:3, ename = ename, fstat = names(fstat))
+		dim = c(length(p), 3, length(method), length(fstat)),
+		dimnames = list(p = p, d = 1:3, method = method, fstat = names(fstat))
 	)
 	data_sd <- array(
-		dim = c(length(p), 3, length(ename), length(fstat)),
-		dimnames = list(p = p, d = 1:3, ename = ename, fstat = names(fstat))
+		dim = c(length(p), 3, length(method), length(fstat)),
+		dimnames = list(p = p, d = 1:3, method = method, fstat = names(fstat))
 	)
 	stat_res <- matrix(nrow = r, ncol = length(fstat))
 	
 	for (i in 1:length(p)) {
 		d <- c(1/p[i], 2/p[i], 3/p[i])
 		for (j in seq_along(d)) {
-			for (m in ename) {
+			for (m in method) {
 				for (k in 1:r) {
-					atomic_res <- readRDS(file = paste0(m, "/", p[i], "_", d[j], "_r", k, ".rds"))
+					atomic_res <- readRDS(file = paste0("l_exp/", m, "_", p[i], "_", d[j], "_r", k, ".rds"))
 					for (l in seq(length(fstat))) {
 						stat_res[k, l] <- fstat[[l]](atomic_res$ltrue, atomic_res$lest) 
 					}
@@ -65,35 +68,35 @@ get_statistics <- function(p, r, ename) {
 	return(df)
 }
 
-plot_comparison <- function(df, plot_title = "", plot_ylab = "", ename) {
+plot_comparison <- function(df, plot_title = "", plot_ylab = "", method) {
 	
 	lab_densities <- function(str) {
 		return(paste0(str, "/p"))
 	}
 	
-	pl <- ggplot(df, aes(x = p, y = data, group = ename)) +
+	pl <- ggplot(df, aes(x = p, y = data, group = method)) +
 		facet_grid(cols = vars(d), rows = vars(fstat), 
 							 labeller = labeller(fstat = toupper, d = lab_densities),
 							 scales = "free") +
-		geom_line(aes(color = ename)) +
-		geom_point(aes(color = ename)) +
+		geom_line(aes(color = method)) +
+		geom_point(aes(color = method)) +
 		theme_bw() +
 		theme(text = element_text(size = 20), legend.position = "bottom") +
 		xlab("Number of nodes (p)") +
 		ylab("") 
 	
 		pl <- pl +
-			geom_ribbon(aes(ymin = data - data_sd, ymax = data + data_sd, fill = ename),
+			geom_ribbon(aes(ymin = data - data_sd, ymax = data + data_sd, fill = method),
 									alpha = .2) +
-			labs(fill = "Method", color = "Method") +
-			scale_fill_discrete(labels = c("Likelihood")) +
-			scale_color_discrete(labels = c("Likelihood"))
+			labs(fill = "Method", color = "Method") #+
+			#scale_fill_discrete(labels = c("Lasso", "Nested Lasso", "Likelihood")) +
+			#scale_color_discrete(labels = c("Lasso", "Nested Lasso", "Likelihood"))
 	
 	return(pl)
 }
 
-df <- get_statistics(p = p, r = r, ename = c("sparse_chol"))
-pl <- plot_comparison(df, ename = c("sparse_chol"))
+df <- get_statistics(p = p, r = r)
+pl <- plot_comparison(df)
 ggplot2::ggsave(filename = "l_exp.pdf", plot = pl, device = "pdf", width = 11, height = 9,
 								path = "../sparsecholeskycovariance/img/")
 

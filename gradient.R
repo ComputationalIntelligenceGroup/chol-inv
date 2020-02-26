@@ -168,15 +168,15 @@ rothman_exp_gen <- function(repetition, nodes) {
 rothman_exp_band <- function(repetition, nodes, n, ntrain) {
 	
 	for (p in nodes) {
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma1true_", p, "_", d, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma1true_", p, "_r", repetition, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		Sigma1band <- band_est(n, ntrain, X = X)
 
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma2true_", p, "_", d, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma2true_", p, "_r", repetition, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		Sigma2band <- band_est(n, ntrain, X = X)
 
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma3true_", p, "_", d, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma3true_", p, "_r", repetition, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		Sigma3band <- band_est(n, ntrain, X = X)
 
@@ -192,15 +192,15 @@ rothman_exp_band <- function(repetition, nodes, n, ntrain) {
 rothman_exp_sparse <- function(repetition, nodes, n, ntrain) {
 	
 	for (p in nodes) {
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma1true_", p, "_", d, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma1true_", p, "_r", repetition, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		L1sparse <- gradient_est(n, ntrain, X = X)
 		
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma2true_", p, "_", d, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma2true_", p, "_r", repetition, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		L2sparse <- gradient_est(n, ntrain, X = X)
 		
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma3true_", p, "_", d, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma3true_", p, "_r", repetition, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		L3sparse <- gradient_est(n, ntrain, X = X)
 		
@@ -297,11 +297,11 @@ nodes <- c(30, 100, 200, 500, 1000)
 #### Experiment over random covariance matrices
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_gen, nodes = nodes)
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
 
 #### Experiment over fixed covariance matrices
 #execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_gen, nodes = nodes)
-#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
 
 #### Experiment over L factors

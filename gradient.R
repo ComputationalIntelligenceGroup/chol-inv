@@ -115,8 +115,10 @@ sigma_exp_sparse <- function(repetition, nodes, n, ntrain) {
 		}
 	}
 }
-# 
-rothman_exp <- function(repetition, nodes, n, ntrain) {
+
+
+####### Rothman exp: for comparison of fixed covariance matrices
+rothman_exp_gen <- function(repetition, nodes) {
 	
 	for (p in nodes) {
 		## Sigma1 = AR1
@@ -128,10 +130,6 @@ rothman_exp <- function(repetition, nodes, n, ntrain) {
 				sigma1[i, j] <- sigma1[j, i] <- 0.7 ^ (i - j)
 			}
 		}
-		
-		X <- MASS::mvrnorm(n, rep(0, p), Sigma = sigma1)
-		Sigma1band <- band_est(n, ntrain, X = X)
-		Lest1sparse <- gradient_est(n, ntrain, X = X)
 		
 		sigma2 <- matrix(ncol = p,
 										 nrow = p,
@@ -152,46 +150,69 @@ rothman_exp <- function(repetition, nodes, n, ntrain) {
 		}
 		diag(sigma2) <- 1
 		
-		X <- MASS::mvrnorm(n, rep(0, p), Sigma = sigma2)
-		Sigma2band <- band_est(n, ntrain, X = X)
-		Lest2sparse <- gradient_est(n, ntrain, X = X)
-		
 		sigma3 <- matrix(ncol = p,
 										 nrow = p,
 										 data = 0.5)
 		diag(sigma3) <- 1
 		
-		
-		X <- MASS::mvrnorm(n, rep(0, p), Sigma = sigma3)
-		Sigma3band <- band_est(n, ntrain, X = X)
-		Lest3sparse <- gradient_est(n, ntrain, X = X)
-		
-		result1 <-	list(
-				"sigmaband" = Sigma1band,
-				"sigmasparse" = Lest1sparse %*% t(Lest1sparse),
-				"sigmatrue" = sigma1
-			)
-		result2 <-	list(
-			"sigmaband" = Sigma2band,
-			"sigmasparse" = Lest2sparse %*% t(Lest2sparse),
-			"sigmatrue" = sigma2
-		)
-		result3 <-	list(
-			"sigmaband" = Sigma3band,
-			"sigmasparse" = Lest3sparse %*% t(Lest3sparse),
-			"sigmatrue" = sigma3
-		)
-		
-		saveRDS(result1,
-						file = paste0("rothman_exp/sigma1_", p, "_r", repetition, ".rds"))
-		saveRDS(result2,
-						file = paste0("rothman_exp/sigma2_", p, "_r", repetition, ".rds"))
-		saveRDS(result3,
-						file = paste0("rothman_exp/sigma3_", p, "_r", repetition, ".rds"))
+		saveRDS(sigma1,
+						file = paste0("rothman_exp/sigma1true_", p, "_r", repetition, ".rds"))
+		saveRDS(sigma2,
+						file = paste0("rothman_exp/sigma2true_", p, "_r", repetition, ".rds"))
+		saveRDS(sigma3,
+						file = paste0("rothman_exp/sigma3true_", p, "_r", repetition, ".rds"))
 	}
 }
 
-# Generate true matrices
+rothman_exp_band <- function(repetition, nodes, n, ntrain) {
+	
+	for (p in nodes) {
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma1true_", p, "_", d, "_r", repetition, ".rds"))
+		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+		Sigma1band <- band_est(n, ntrain, X = X)
+
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma2true_", p, "_", d, "_r", repetition, ".rds"))
+		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+		Sigma2band <- band_est(n, ntrain, X = X)
+
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma3true_", p, "_", d, "_r", repetition, ".rds"))
+		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+		Sigma3band <- band_est(n, ntrain, X = X)
+
+		saveRDS(Sigma1band,
+						file = paste0("rothman_exp/sigma1band_", p, "_r", repetition, ".rds"))
+		saveRDS(Sigma2band,
+						file = paste0("rothman_exp/sigma2band_", p, "_r", repetition, ".rds"))
+		saveRDS(Sigma3band,
+						file = paste0("rothman_exp/sigma3band_", p, "_r", repetition, ".rds"))
+	}
+}
+
+rothman_exp_sparse <- function(repetition, nodes, n, ntrain) {
+	
+	for (p in nodes) {
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma1true_", p, "_", d, "_r", repetition, ".rds"))
+		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+		L1sparse <- gradient_est(n, ntrain, X = X)
+		
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma2true_", p, "_", d, "_r", repetition, ".rds"))
+		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+		L2sparse <- gradient_est(n, ntrain, X = X)
+		
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma3true_", p, "_", d, "_r", repetition, ".rds"))
+		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+		L3sparse <- gradient_est(n, ntrain, X = X)
+		
+		saveRDS(L1sparse %*% t(L1sparse),
+						file = paste0("rothman_exp/sigma1sparse_", p, "_r", repetition, ".rds"))
+		saveRDS(L2sparse %*% t(L2sparse),
+						file = paste0("rothman_exp/sigma2sparse_", p, "_r", repetition, ".rds"))
+		saveRDS(L3sparse %*% t(L3sparse),
+						file = paste0("rothman_exp/sigma3sparse_", p, "_r", repetition, ".rds"))
+	}
+}
+
+####### L exp: for comparison of l factors
 l_exp_gen <- function(repetition, nodes) {
 	for (p in nodes) {
 		densities <- c(1/p, 2/p, 3/p)
@@ -278,7 +299,9 @@ nodes <- c(30, 100, 200, 500, 1000)
 execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
 
 #### Experiment over fixed covariance matrices
-#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_gen, nodes = nodes)
+#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
 
 #### Experiment over L factors
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_gen, nodes = nodes)

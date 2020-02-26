@@ -19,16 +19,17 @@ get_frobs_sigma_exp <- function(p, r) {
 		d <- c(1/p[i], 2/p[i], 3/p[i])
 		for (j in seq_along(d)) {
 			for (k in 1:r) {
-				res <- readRDS(file = paste0("sigma_exp/", p[i], "_", d[j], "_r", k, ".rds"))
-				frobs_res[k, "sparse"] <- norm(res$sigmatrue - res$sigmasparse, type = "F") 
-				frobs_res[k, "band"] <- norm(res$sigmatrue - res$sigmaband, type = "F")
-
-				frobs[i, j, "sparse"] <- mean(frobs_res[, "sparse"])
-				frobs[i, j, "band"] <- mean(frobs_res[, "band"])
-
-				frobs_sd[i, j, "sparse"] <- stats::sd(frobs_res[, "sparse"])
-				frobs_sd[i, j, "band"] <- stats::sd(frobs_res[, "band"])
+				res_sparse <- readRDS(file = paste0("sigma_exp/sigmasparse_", p[i], "_", d[j], "_r", k, ".rds"))
+				res_band <- readRDS(file = paste0("sigma_exp/sigmaband_", p[i], "_", d[j], "_r", k, ".rds"))
+				res_true <- readRDS(file = paste0("sigma_exp/sigmatrue_", p[i], "_", d[j], "_r", k, ".rds"))
+				frobs_res[k, "sparse"] <- norm(res_true - res_sparse, type = "2") 
+				frobs_res[k, "band"] <- norm(res_true - res_band, type = "2")
 			}
+			frobs[i, j, "sparse"] <- mean(frobs_res[, "sparse"])
+			frobs[i, j, "band"] <- mean(frobs_res[, "band"])
+			
+			frobs_sd[i, j, "sparse"] <- stats::sd(frobs_res[, "sparse"])
+			frobs_sd[i, j, "band"] <- stats::sd(frobs_res[, "band"])
 		}
 	}
 	

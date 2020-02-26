@@ -1,9 +1,6 @@
 library("ggplot2")
 library("dplyr")
 
-r <- 200
-p <- c(10, 30, 50, 100, 200, 500, 1000)
-
 stat_tpr <- function(ltrue, lest) {
 	p <- ncol(ltrue)
 	return((sum(ltrue != 0 & lest != 0) - p)/(sum(ltrue != 0) - p))
@@ -13,8 +10,8 @@ stat_tnr <- function(ltrue, lest) {
 	tn <- sum(ltrue == 0 & lest == 0) - p*(p - 1)/2
 	return(tn/(sum(ltrue == 0) - (p * (p - 1) / 2)))
 }
-stat_frob <- function(ltrue, lest) {
-	return(norm(lest - ltrue, type = "F"))
+stat_opnorm <- function(ltrue, lest) {
+	return(norm(lest - ltrue, type = "2"))
 }
 stat_f1 <- function(ltrue, lest) {
 	p <- ncol(ltrue)
@@ -24,23 +21,23 @@ stat_f1 <- function(ltrue, lest) {
 	return(2*tp/(2*tp + fp + fn))
 }
 
-get_statistics <- function(p, r, ename) {
+get_statistics <- function(p, r) {
 	fstat <- c("tpr" = stat_tpr,
 						 "tnr" = stat_tnr,
-						 "frob" = stat_frob,
+						 "opnorm" = stat_opnorm,
 						 "f1" = stat_f1)
-	methods <- c("sparse", "band")
+	method <- c("sparse", "band")
 	data <- array(
-		dim = c(length(p), 3, length(methods), length(fstat)),
-		dimnames = list(p = p, sigma = 1:3, methods = methods, fstat = names(fstat))
+		dim = c(length(p), 3, length(method), length(fstat)),
+		dimnames = list(p = p, sigma = 1:3, method = method, fstat = names(fstat))
 	)
 	data_sd <- array(
-		dim = c(length(p), 3, length(methods), length(fstat)),
-		dimnames = list(p = p, sigma = 1:3, methods = methods, fstat = names(fstat))
+		dim = c(length(p), 3, length(method), length(fstat)),
+		dimnames = list(p = p, sigma = 1:3, method = method, fstat = names(fstat))
 	)
 	stat_res <- array(
-		dim = c(r, length(fstat), length(methods)),
-		dimnames = list(r = 1:r, fstat = names(fstat), methods = methods)
+		dim = c(r, length(fstat), length(method)),
+		dimnames = list(r = 1:r, fstat = names(fstat), method = method)
 	)
 		
 	for (i in 1:length(p)) {
@@ -52,9 +49,9 @@ get_statistics <- function(p, r, ename) {
 					stat_res[k, l, "band"] <- fstat[[l]](res$sigmatrue, res$sigmaband)
 				}
 			}
-			for (m in methods) {
+			for (m in method) {
 				for (l in seq(length(fstat))) {
-					data[i, sigma, m, l] <- stats::mean(stat_res[, l, m])
+					data[i, sigma, m, l] <- mean(stat_res[, l, m])
 					data_sd[i, sigma, m, l] <- stats::sd(stat_res[, l, m])
 				}
 			}
@@ -62,7 +59,7 @@ get_statistics <- function(p, r, ename) {
 	}
 	
 	df <- data %>% as.tbl_cube(met_name = "data") %>% as_tibble()
-	df$m <- as.factor(df$m)
+	df$method <- as.factor(df$method)
 	df$sigma <- as.factor(df$sigma)
 	df_sd <- data_sd %>% as.tbl_cube(met_name = "data_sd") %>% as_tibble()
 	df$data_sd <- df_sd$data_sd
@@ -72,19 +69,23 @@ get_statistics <- function(p, r, ename) {
 
 plot_comparison <- function(df, plot_title = "", plot_ylab = "") {
 	
-	pl <- ggplot(df, aes(x = p, y = data, group = m)) +
+	lab_sigmas <- function(str) {
+		return(paste0("Sigma", str))
+	}
+	
+	pl <- ggplot(df, aes(x = p, y = data, group = method)) +
 		facet_grid(cols = vars(sigma), rows = vars(fstat), 
-							 labeller = labeller(fstat = toupper),
+							 labeller = labeller(fstat = toupper, sigma = lab_sigmas),
 							 scales = "free") +
-		geom_line(aes(color = m)) +
-		geom_point(aes(color = m)) +
+		geom_line(aes(color = method)) +
+		geom_point(aes(color = method)) +
 		theme_bw() +
 		theme(text = element_text(size = 20), legend.position = "bottom") +
 		xlab("Number of nodes (p)") +
 		ylab("") 
 	
 	pl <- pl +
-		geom_ribbon(aes(ymin = data - data_sd, ymax = data + data_sd, fill = m),
+		geom_ribbon(aes(ymin = data - data_sd, ymax = data + data_sd, fill = method),
 								alpha = .2) +
 		labs(fill = "Method", color = "Method") #+
 		#scale_fill_discrete(labels = c("Likelihood")) +
@@ -93,7 +94,10 @@ plot_comparison <- function(df, plot_title = "", plot_ylab = "") {
 	return(pl)
 }
 
-df <- get_statistics(p = p, r = r, ename = "rothman_exp")
+
+r <- 200
+p <- c(30, 100, 200, 500, 1000)
+df <- get_statistics(p = p, r = r)
 pl <- plot_comparison(df)
 ggplot2::ggsave(filename = "rothman_exp.pdf", plot = pl, device = "pdf", width = 11, height = 9,
 								path = "../sparsecholeskycovariance/img/")

@@ -1,3 +1,4 @@
+source("nestedlasso.r")
 devtools::install_github("irenecrsn/covchol")
 
 # Returns an estimate of the covariance matrix
@@ -6,6 +7,44 @@ band_est <- function(n, ntrain, X) {
 	Sigmaest <- PDSCE::band.chol.cv(x = X, n.tr = ntrain)$sigma
 	
 	return(Sigmaest)
+}
+
+# Returns an estimate of the Cholesky factor
+nestedlasso_est <- function(n, ntrain, X) {
+	
+	Covtest <- cov(X[(ntrain + 1):n,])
+	
+	llpath <- nested.lasso.path(X = X[1:ntrain,])
+	frobs <- lapply(
+		X = llpath,
+		FUN = function(res) {
+			norm(res$sigma - Covtest, type = "F")
+		}
+	)
+	
+	selected <- llpath[[which.min(frobs)]]
+	Lest <- covchol::cholfromldl(L = selected$cholesky, D = selected$sigma2)
+	
+	return(Lest)
+}
+
+# Returns an estimate of the Cholesky factor
+lasso_est <- function(n, ntrain, X) {
+	
+	p <- ncol(X)
+	
+	D <- numeric(p)
+	B <- matrix(ncol = p, nrow = p, data = 0)
+	for (i in 2:p) {
+		model <- glmnet::glmnet(x = X[, 1:(i - 1)], y = X[, i], 
+														family = "gaussian")
+		B[i, parents] <- - model$coefficients[- 1, 1]
+		D[i] <- model$sigma^2
+	}
+	D[1] <- stats::var(data[, 1])
+	diag(B) <- 1
+	
+	return(covchol::cholfromldl(L = B, D = D))
 }
 
 # Returns an estimate of the Cholesky factor
@@ -26,8 +65,10 @@ gradient_est <- function(n, ntrain, X) {
 	return(Lest)
 }
 
-# for comparison of sigmas instead of l factors
-sigma_exp <- function(repetition, nodes, n, ntrain) {
+####### Sigma exp: for comparison of sigmas instead of l factors
+
+# Generate true matrices
+sigma_exp_gen <- function(repetition, nodes) {
 	for (p in nodes) {
 		densities <- c(1/p, 2/p, 3/p)
 		for (d in densities) {
@@ -35,21 +76,45 @@ sigma_exp <- function(repetition, nodes, n, ntrain) {
 			diag(Ltrue) <- runif(p, 0.1, 1)
 			Sigmatrue <- Ltrue %*% t(Ltrue)
 			
-			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
-			
-			Lsparse <- gradient_est(n, ntrain, X = X)
-			Sigmaband <- band_est(n, ntrain, X = X)
-			Sigmasparse <- Lsparse %*% t(Lsp)
-			
-			result <- list("sigmatrue" = Sigmatrue, 
-									"sigmasparse" = Sigmasparse,
-									"sigmaband" = Sigmaband)		
-			saveRDS(result,
-							file = paste0("sigma_exp/", p, "_", d, "_r", repetition, ".rds"))
+			saveRDS(Sigmatrue,
+							file = paste0("sigma_exp/sigmatrue_", p, "_", d, "_r", repetition, ".rds"))
 		}
 	}
 }
 
+# Banding estimate
+sigma_exp_band <- function(repetition, nodes, n, ntrain) {
+	for (p in nodes) {
+		densities <- c(1/p, 2/p, 3/p)
+		for (d in densities) {
+			Sigmatrue <- readRDS(file = paste0("sigma_exp/sigmatrue_", p, "_", d, "_r", repetition, ".rds"))
+			
+			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+			Sigmaband <- band_est(n, ntrain, X = X)
+
+			saveRDS(Sigmaband,
+							file = paste0("sigma_exp/sigmaband_", p, "_", d, "_r", repetition, ".rds"))
+		}
+	}
+}
+
+# Likelihood estimate
+sigma_exp_sparse <- function(repetition, nodes, n, ntrain) {
+	for (p in nodes) {
+		densities <- c(1/p, 2/p, 3/p)
+		for (d in densities) {
+			Sigmatrue <- readRDS(file = paste0("sigma_exp/sigmatrue_", p, "_", d, "_r", repetition, ".rds"))
+			
+			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+			
+			Lsparse <- gradient_est(n, ntrain, X = X)
+			Sigmasparse <- Lsparse %*% t(Lsparse)
+			
+			saveRDS(Sigmasparse,
+							file = paste0("sigma_exp/sigmasparse_", p, "_", d, "_r", repetition, ".rds"))
+		}
+	}
+}
 # 
 rothman_exp <- function(repetition, nodes, n, ntrain) {
 	
@@ -126,29 +191,69 @@ rothman_exp <- function(repetition, nodes, n, ntrain) {
 	}
 }
 
-l_exp <- function(repetition, nodes, n, ntrain) {
+# Generate true matrices
+l_exp_gen <- function(repetition, nodes) {
 	for (p in nodes) {
 		densities <- c(1/p, 2/p, 3/p)
 		for (d in densities) {
 			Ltrue <- covchol::rlower(p = p, d = d)
 			diag(Ltrue) <- runif(p, 0.1, 1)
-			Sigmatrue <- Ltrue %*% t(Ltrue)
-			
-			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
-			
-			Sigmasparse <- gradient_est(n, ntrain, X = X)
-			Sigmaband <- band_est(n, ntrain, X = X)
-			
-			result <- list("sigmatrue" = Sigmatrue, 
-										 "sigmasparse" = Sigmasparse,
-										 "sigmaband" = Sigmaband)		
-			saveRDS(result,
-							file = paste0("sigma_exp/", p, "_", d, "_r", repetition, ".rds"))
+
+			saveRDS(Ltrue,
+							file = paste0("l_exp/ltrue_", p, "_", d, "_r", repetition, ".rds"))
 		}
 	}
 }
 
-execute_experiment <- function(r, ename, emethod, ...) {
+l_exp_sparse <- function(repetition, nodes, n, ntrain) {
+	for (p in nodes) {
+		densities <- c(1/p, 2/p, 3/p)
+		for (d in densities) {
+			Ltrue <- readRDS(file = paste0("l_exp/ltrue_", p, "_", d, "_r", repetition, ".rds"))
+			
+			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Ltrue %*% t(Ltrue))
+			
+			Lest <- gradient_est(n, ntrain, X = X)
+			
+			saveRDS(Lest,
+							file = paste0("l_exp/sparse_", p, "_", d, "_r", repetition, ".rds"))
+		}
+	}
+}
+
+l_exp_lasso <- function(repetition, nodes, n, ntrain) {
+	for (p in nodes) {
+		densities <- c(1/p, 2/p, 3/p)
+		for (d in densities) {
+			Ltrue <- readRDS(file = paste0("l_exp/ltrue_", p, "_", d, "_r", repetition, ".rds"))
+			
+			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Ltrue %*% t(Ltrue))
+			
+			Lest <- lasso_est(n, ntrain, X = X)
+			
+			saveRDS(Lest,
+							file = paste0("l_exp/lasso_", p, "_", d, "_r", repetition, ".rds"))
+		}
+	}
+}
+
+l_exp_nestedlasso <- function(repetition, nodes, n, ntrain) {
+	for (p in nodes) {
+		densities <- c(1/p, 2/p, 3/p)
+		for (d in densities) {
+			Ltrue <- readRDS(file = paste0("l_exp/ltrue_", p, "_", d, "_r", repetition, ".rds"))
+			
+			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Ltrue %*% t(Ltrue))
+			
+			Lest <- nestedlasso_est(n, ntrain, X = X)
+			
+			saveRDS(Lest,
+							file = paste0("l_exp/nestedlasso_", p, "_", d, "_r", repetition, ".rds"))
+		}
+	}
+}
+
+execute_parallel <- function(r, ename, emethod, ...) {
 	n_cores <- min(r, parallel::detectCores() - 2)
 	cl <- parallel::makeCluster(n_cores, outfile = "")
 	doParallel::registerDoParallel(cl)
@@ -166,5 +271,18 @@ execute_experiment <- function(r, ename, emethod, ...) {
 }
 
 nodes <- c(30, 100, 200, 500, 1000)
-#execute_experiment(r = 200, ename = "sigma_exp", emethod = sigma_exp, nodes = nodes, n = 200, ntrain = 100)
-execute_experiment(r = 200, ename = "rothman_exp", emethod = rothman_exp, nodes = nodes, n = 200, ntrain = 100)
+
+#### Experiment over random covariance matrices
+#execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_gen, nodes = nodes)
+#execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
+
+#### Experiment over fixed covariance matrices
+#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp, nodes = nodes, n = 200, ntrain = 100)
+
+#### Experiment over L factors
+#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_gen, nodes = nodes)
+#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_lasso, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
+

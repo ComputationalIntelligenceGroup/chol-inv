@@ -1,4 +1,5 @@
 source("nestedlasso.r")
+source("lasso.r")
 devtools::install_github("irenecrsn/covchol")
 
 # Returns an estimate of the covariance matrix
@@ -31,20 +32,20 @@ nestedlasso_est <- function(n, ntrain, X) {
 # Returns an estimate of the Cholesky factor
 lasso_est <- function(n, ntrain, X) {
 	
-	p <- ncol(X)
+	Covtest <- cov(X[(ntrain + 1):n,])
 	
-	D <- numeric(p)
-	B <- matrix(ncol = p, nrow = p, data = 0)
-	for (i in 2:p) {
-		model <- glmnet::glmnet(x = X[, 1:(i - 1)], y = X[, i], 
-														family = "gaussian")
-		B[i, parents] <- - model$coefficients[- 1, 1]
-		D[i] <- model$sigma^2
-	}
-	D[1] <- stats::var(data[, 1])
-	diag(B) <- 1
+	llpath <- lasso.path(X = X[1:ntrain,])
+	frobs <- lapply(
+		X = llpath,
+		FUN = function(res) {
+			norm(res$sigma - Covtest, type = "F")
+		}
+	)
 	
-	return(covchol::cholfromldl(L = B, D = D))
+	selected <- llpath[[which.min(frobs)]]
+	Lest <- covchol::cholfromldl(L = selected$cholesky, D = selected$sigma2)
+	
+	return(Lest)
 }
 
 # Returns an estimate of the Cholesky factor

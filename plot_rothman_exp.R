@@ -43,10 +43,12 @@ get_statistics <- function(p, r) {
 	for (i in 1:length(p)) {
 		for (sigma in 1:3) {
 			for (k in 1:r) {
-				res <- readRDS(file = paste0("rothman_exp/sigma", sigma, "_", p[i], "_r", k, ".rds"))
+				sigmatrue <- readRDS(file = paste0("rothman_exp/sigma", sigma, "true_", p[i], "_r", k, ".rds"))
+				sigmasparse <- readRDS(file = paste0("rothman_exp/sigma", sigma, "sparse_", p[i], "_r", k, ".rds"))
+				sigmaband <- readRDS(file = paste0("rothman_exp/sigma", sigma, "band_", p[i], "_r", k, ".rds"))
 				for (l in seq(length(fstat))) {
-					stat_res[k, l, "sparse"] <- fstat[[l]](res$sigmatrue, res$sigmasparse)
-					stat_res[k, l, "band"] <- fstat[[l]](res$sigmatrue, res$sigmaband)
+					stat_res[k, l, "sparse"] <- fstat[[l]](sigmatrue, sigmasparse)
+					stat_res[k, l, "band"] <- fstat[[l]](sigmatrue, sigmaband)
 				}
 			}
 			for (m in method) {

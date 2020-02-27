@@ -42,8 +42,8 @@ get_statistics <- function(p, r) {
 		
 	for (i in 1:length(p)) {
 		for (sigma in 1:3) {
+			sigmatrue <- readRDS(file = paste0("rothman_exp/sigma", sigma, "true_", p[i], ".rds"))
 			for (k in 1:r) {
-				sigmatrue <- readRDS(file = paste0("rothman_exp/sigma", sigma, "true_", p[i], "_r", k, ".rds"))
 				sigmasparse <- readRDS(file = paste0("rothman_exp/sigma", sigma, "sparse_", p[i], "_r", k, ".rds"))
 				sigmaband <- readRDS(file = paste0("rothman_exp/sigma", sigma, "band_", p[i], "_r", k, ".rds"))
 				for (l in seq(length(fstat))) {
@@ -63,6 +63,7 @@ get_statistics <- function(p, r) {
 	df <- data %>% as.tbl_cube(met_name = "data") %>% as_tibble()
 	df$method <- as.factor(df$method)
 	df$sigma <- as.factor(df$sigma)
+	df$fstat <- as.factor(df$fstat)
 	df_sd <- data_sd %>% as.tbl_cube(met_name = "data_sd") %>% as_tibble()
 	df$data_sd <- df_sd$data_sd
 	

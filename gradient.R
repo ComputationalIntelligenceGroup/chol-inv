@@ -119,7 +119,9 @@ sigma_exp_sparse <- function(repetition, nodes, n, ntrain) {
 
 
 ####### Rothman exp: for comparison of fixed covariance matrices
-rothman_exp_gen <- function(repetition, nodes) {
+rothman_exp_gen <- function(nodes) {
+	
+	dir.create("rothman_exp", showWarnings = FALSE)
 	
 	for (p in nodes) {
 		## Sigma1 = AR1
@@ -157,26 +159,26 @@ rothman_exp_gen <- function(repetition, nodes) {
 		diag(sigma3) <- 1
 		
 		saveRDS(sigma1,
-						file = paste0("rothman_exp/sigma1true_", p, "_r", repetition, ".rds"))
+						file = paste0("rothman_exp/sigma1true_", p, ".rds"))
 		saveRDS(sigma2,
-						file = paste0("rothman_exp/sigma2true_", p, "_r", repetition, ".rds"))
+						file = paste0("rothman_exp/sigma2true_", p, ".rds"))
 		saveRDS(sigma3,
-						file = paste0("rothman_exp/sigma3true_", p, "_r", repetition, ".rds"))
+						file = paste0("rothman_exp/sigma3true_", p, ".rds"))
 	}
 }
 
 rothman_exp_band <- function(repetition, nodes, n, ntrain) {
 	
 	for (p in nodes) {
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma1true_", p, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma1true_", p, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		Sigma1band <- band_est(n, ntrain, X = X)
 
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma2true_", p, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma2true_", p, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		Sigma2band <- band_est(n, ntrain, X = X)
 
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma3true_", p, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma3true_", p, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		Sigma3band <- band_est(n, ntrain, X = X)
 
@@ -192,15 +194,15 @@ rothman_exp_band <- function(repetition, nodes, n, ntrain) {
 rothman_exp_sparse <- function(repetition, nodes, n, ntrain) {
 	
 	for (p in nodes) {
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma1true_", p, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma1true_", p, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		L1sparse <- gradient_est(n, ntrain, X = X)
 		
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma2true_", p, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma2true_", p, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		L2sparse <- gradient_est(n, ntrain, X = X)
 		
-		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma3true_", p, "_r", repetition, ".rds"))
+		Sigmatrue <- readRDS(file = paste0("rothman_exp/sigma3true_", p, ".rds"))
 		X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 		L3sparse <- gradient_est(n, ntrain, X = X)
 		
@@ -281,7 +283,9 @@ execute_parallel <- function(r, ename, emethod, ...) {
 	doParallel::registerDoParallel(cl)
 	
 	iter <- foreach::foreach(repetition = seq(r), .combine = rbind,
-													 .export = c("band_est", "gradient_est"))
+													 .export = c("band_est", "gradient_est", 
+													 						"nestedlasso_est", "lasso_est",
+													 						"nested.lasso.path", "autoReg", "nested.lasso.cov"))
 	foreach::"%dopar%"(iter, {
 		dir.create(ename, showWarnings = FALSE)
 		
@@ -300,13 +304,14 @@ nodes <- c(30, 100, 200, 500, 1000)
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
 
 #### Experiment over fixed covariance matrices
-#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_gen, nodes = nodes)
+rothman_exp_gen(nodes = nodes)
 #execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
 
 #### Experiment over L factors
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_gen, nodes = nodes)
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+nodes <- c(30, 100, 200)
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_lasso, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
+execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
 

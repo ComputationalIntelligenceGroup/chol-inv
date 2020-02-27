@@ -90,9 +90,9 @@ plot_comparison <- function(df, plot_title = "", plot_ylab = "") {
 	pl <- pl +
 		geom_ribbon(aes(ymin = data - data_sd, ymax = data + data_sd, fill = method),
 								alpha = .2) +
-		labs(fill = "Method", color = "Method") #+
-		#scale_fill_discrete(labels = c("Likelihood")) +
-		#scale_color_discrete(labels = c("Likelihood"))
+		labs(fill = "Method", color = "Method") +
+		scale_fill_discrete(labels = c("Banding", "Likelihood")) +
+		scale_color_discrete(labels = c("Banding", "Likelihood"))
 	
 	return(pl)
 }

@@ -71,7 +71,7 @@ get_statistics <- function(p, r) {
 plot_comparison <- function(df, plot_title = "", plot_ylab = "", method) {
 	
 	lab_densities <- function(str) {
-		return(paste0(str, "/p"))
+		return(paste0("Density = ", str, "/p"))
 	}
 	
 	pl <- ggplot(df, aes(x = p, y = data, group = method)) +

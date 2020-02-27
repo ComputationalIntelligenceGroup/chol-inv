@@ -301,8 +301,8 @@ nodes <- c(30, 100, 200, 500, 1000)
 
 #### Experiment over fixed covariance matrices
 #execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_gen, nodes = nodes)
-execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
 
 #### Experiment over L factors
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_gen, nodes = nodes)

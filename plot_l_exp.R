@@ -1,9 +1,6 @@
 library("ggplot2")
 library("dplyr")
 
-r <- 200
-p <- c(10, 30, 50, 100, 200, 500, 1000)
-
 stat_tpr <- function(ltrue, lest) {
 	p <- ncol(ltrue)
 	return((sum(ltrue != 0 & lest != 0) - p)/(sum(ltrue != 0) - p))
@@ -29,9 +26,10 @@ get_statistics <- function(p, r) {
 						 "tnr" = stat_tnr,
 						 "frob" = stat_frob,
 						 "f1" = stat_f1)
-	method <- c("lasso",
-							"nestedlasso",
-							"sparse")
+	method <- c(#"lasso",
+							"nestedlasso"#,
+							#"sparse"
+							)
 	data <- array(
 		dim = c(length(p), 3, length(method), length(fstat)),
 		dimnames = list(p = p, d = 1:3, method = method, fstat = names(fstat))
@@ -47,9 +45,10 @@ get_statistics <- function(p, r) {
 		for (j in seq_along(d)) {
 			for (m in method) {
 				for (k in 1:r) {
-					atomic_res <- readRDS(file = paste0("l_exp/", m, "_", p[i], "_", d[j], "_r", k, ".rds"))
+					res_nestedlasso <- readRDS(file = paste0("l_exp/nestedlasso_", p[i], "_", d[j], "_r", k, ".rds"))
+					res_true <- readRDS(file = paste0("l_exp/ltrue_", p[i], "_", d[j], "_r", k, ".rds"))
 					for (l in seq(length(fstat))) {
-						stat_res[k, l] <- fstat[[l]](atomic_res$ltrue, atomic_res$lest) 
+						stat_res[k, l] <- fstat[[l]](res_true, res_nestedlasso) 
 					}
 				}
 				for (l in seq(length(fstat))) {
@@ -95,6 +94,8 @@ plot_comparison <- function(df, plot_title = "", plot_ylab = "", method) {
 	return(pl)
 }
 
+r <- 200
+p <- c(30, 100, 200)
 df <- get_statistics(p = p, r = r)
 pl <- plot_comparison(df)
 ggplot2::ggsave(filename = "l_exp.pdf", plot = pl, device = "pdf", width = 11, height = 9,

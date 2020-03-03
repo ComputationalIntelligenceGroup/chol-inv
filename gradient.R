@@ -73,8 +73,7 @@ sigma_exp_gen <- function(repetition, nodes) {
 	for (p in nodes) {
 		densities <- c(1/p, 2/p, 3/p)
 		for (d in densities) {
-			Ltrue <- covchol::rlower(p = p, d = d)
-			diag(Ltrue) <- runif(p, 0.1, 1)
+			Ltrue <- 
 			Sigmatrue <- Ltrue %*% t(Ltrue)
 			
 			saveRDS(Sigmatrue,
@@ -285,7 +284,8 @@ execute_parallel <- function(r, ename, emethod, ...) {
 	iter <- foreach::foreach(repetition = seq(r), .combine = rbind,
 													 .export = c("band_est", "gradient_est", 
 													 						"nestedlasso_est", "lasso_est",
-													 						"nested.lasso.path", "autoReg", "nested.lasso.cov"))
+													 						"nested.lasso.path", "autoReg", "nested.lasso.cov",
+													 						"lasso.path", "lasso.cov"))
 	foreach::"%dopar%"(iter, {
 		dir.create(ename, showWarnings = FALSE)
 		
@@ -304,14 +304,14 @@ nodes <- c(30, 100, 200, 500, 1000)
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
 
 #### Experiment over fixed covariance matrices
-rothman_exp_gen(nodes = nodes)
+#rothman_exp_gen(nodes = nodes)
 #execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
 
 #### Experiment over L factors
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_gen, nodes = nodes)
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-nodes <- c(30, 100, 200)
+#nodes <- c(30, 100, 200)
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_lasso, nodes = nodes, n = 200, ntrain = 100)
-execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
 

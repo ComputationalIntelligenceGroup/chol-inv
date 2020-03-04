@@ -3,12 +3,12 @@ library("dplyr")
 
 get_norms_sigma_exp <- function(p, r) {
 
-	method <- c("sparse", "band")
+	method <- c("sample")
 	norms <- array(
 		dim = c(length(p), 3, length(method)),
 		dimnames = list(p = p, d = 1:3, method = method)
 	)
-	norms_sd <- array(
+	norms_se <- array(
 		dim = c(length(p), 3, length(method)),
 		dimnames = list(p = p, d = 1:3, method = method)
 	)
@@ -19,24 +19,28 @@ get_norms_sigma_exp <- function(p, r) {
 		d <- c(1/p[i], 2/p[i], 3/p[i])
 		for (j in seq_along(d)) {
 			for (k in 1:r) {
-				res_sparse <- readRDS(file = paste0("sigma_exp/sigmasparse_", p[i], "_", d[j], "_r", k, ".rds"))
-				res_band <- readRDS(file = paste0("sigma_exp/sigmaband_", p[i], "_", d[j], "_r", k, ".rds"))
+				#res_sparse <- readRDS(file = paste0("sigma_exp/sigmasparse_", p[i], "_", d[j], "_r", k, ".rds"))
+				#res_band <- readRDS(file = paste0("sigma_exp/sigmaband_", p[i], "_", d[j], "_r", k, ".rds"))
 				res_true <- readRDS(file = paste0("sigma_exp/sigmatrue_", p[i], "_", d[j], "_r", k, ".rds"))
-				norms_res[k, "sparse"] <- norm(res_true - res_sparse, type = "2") 
-				norms_res[k, "band"] <- norm(res_true - res_band, type = "2")
+				res_sample <- readRDS(file = paste0("sigma_exp/sigmasample_", p[i], "_", d[j], "_r", k, ".rds"))
+				#norms_res[k, "sparse"] <- norm(res_true - res_sparse, type = "2") 
+				#norms_res[k, "band"] <- norm(res_true - res_band, type = "2")
+				norms_res[k, "sample"] <- norm(res_true - res_sample, type = "2")
 			}
-			norms[i, j, "sparse"] <- mean(norms_res[, "sparse"])
-			norms[i, j, "band"] <- mean(norms_res[, "band"])
+			#norms[i, j, "sparse"] <- mean(norms_res[, "sparse"])
+			#norms[i, j, "band"] <- mean(norms_res[, "band"])
+			norms[i, j, "sample"] <- mean(norms_res[, "sample"])
 			
-			norms_sd[i, j, "sparse"] <- stats::sd(norms_res[, "sparse"])
-			norms_sd[i, j, "band"] <- stats::sd(norms_res[, "band"])
+			#norms_se[i, j, "sparse"] <- stats::sd(norms_res[, "sparse"])/sqrt(r)
+			#norms_se[i, j, "band"] <- stats::sd(norms_res[, "band"])/sqrt(r)
+			norms_se[i, j, "sample"] <- stats::sd(norms_res[, "sample"])/sqrt(r)
 		}
 	}
 	
 	df <- norms %>% as.tbl_cube(met_name = "norms") %>% as_tibble()
 	df$method <- as.factor(df$method)
-	df_sd <- norms_sd %>% as.tbl_cube(met_name = "norms_sd") %>% as_tibble()
-	df$norms_sd <- df_sd$norms_sd
+	df_se <- norms_se %>% as.tbl_cube(met_name = "norms_se") %>% as_tibble()
+	df$norms_se <- df_se$norms_se
 	
 	return(df)
 }
@@ -58,11 +62,11 @@ plot_sigma_exp <- function(df, plot_title = "", plot_ylab = "") {
 		ylab("") 
 	
 		pl <- pl +
-			geom_ribbon(aes(ymin = norms - norms_sd, ymax = norms + norms_sd, fill = method),
+			geom_ribbon(aes(ymin = norms - norms_se, ymax = norms + norms_se, fill = method),
 									alpha = .2) +
-			labs(fill = "Method", color = "Method") +
-			scale_fill_discrete(labels = c("Banding", "Likelihood")) +
-			scale_color_discrete(labels = c("Banding", "Likelihood"))
+			labs(fill = "Method", color = "Method")# +
+			#scale_fill_discrete(labels = c("Banding", "Likelihood")) +
+			#scale_color_discrete(labels = c("Banding", "Likelihood"))
 	
 	return(pl)
 }

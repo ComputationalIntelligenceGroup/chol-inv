@@ -31,7 +31,7 @@ get_statistics <- function(p, r) {
 		dim = c(length(p), 3, length(method), length(fstat)),
 		dimnames = list(p = p, sigma = 1:3, method = method, fstat = names(fstat))
 	)
-	data_sd <- array(
+	data_se <- array(
 		dim = c(length(p), 3, length(method), length(fstat)),
 		dimnames = list(p = p, sigma = 1:3, method = method, fstat = names(fstat))
 	)
@@ -42,10 +42,10 @@ get_statistics <- function(p, r) {
 		
 	for (i in 1:length(p)) {
 		for (sigma in 1:3) {
-			sigmatrue <- readRDS(file = paste0("rothman_exp/sigma", sigma, "true_", p[i], ".rds"))
+			sigmatrue <- readRDS(file = paste0("naive_sim/rothman_exp/sigma", sigma, "true_", p[i], ".rds"))
 			for (k in 1:r) {
-				sigmasparse <- readRDS(file = paste0("rothman_exp/sigma", sigma, "sparse_", p[i], "_r", k, ".rds"))
-				sigmaband <- readRDS(file = paste0("rothman_exp/sigma", sigma, "band_", p[i], "_r", k, ".rds"))
+				sigmasparse <- readRDS(file = paste0("naive_sim/rothman_exp/sigma", sigma, "sparse_", p[i], "_r", k, ".rds"))
+				sigmaband <- readRDS(file = paste0("naive_sim/rothman_exp/sigma", sigma, "band_", p[i], "_r", k, ".rds"))
 				for (l in seq(length(fstat))) {
 					stat_res[k, l, "sparse"] <- fstat[[l]](sigmatrue, sigmasparse)
 					stat_res[k, l, "band"] <- fstat[[l]](sigmatrue, sigmaband)
@@ -54,7 +54,7 @@ get_statistics <- function(p, r) {
 			for (m in method) {
 				for (l in seq(length(fstat))) {
 					data[i, sigma, m, l] <- mean(stat_res[, l, m])
-					data_sd[i, sigma, m, l] <- stats::sd(stat_res[, l, m])
+					data_se[i, sigma, m, l] <- stats::sd(stat_res[, l, m])/sqrt(r)
 				}
 			}
 		}
@@ -64,8 +64,8 @@ get_statistics <- function(p, r) {
 	df$method <- as.factor(df$method)
 	df$sigma <- as.factor(df$sigma)
 	df$fstat <- as.factor(df$fstat)
-	df_sd <- data_sd %>% as.tbl_cube(met_name = "data_sd") %>% as_tibble()
-	df$data_sd <- df_sd$data_sd
+	df_se <- data_se %>% as.tbl_cube(met_name = "data_se") %>% as_tibble()
+	df$data_se <- df_se$data_se
 	
 	return(df)
 }
@@ -88,7 +88,7 @@ plot_comparison <- function(df, plot_title = "", plot_ylab = "") {
 		ylab("") 
 	
 	pl <- pl +
-		geom_ribbon(aes(ymin = data - data_sd, ymax = data + data_sd, fill = method),
+		geom_ribbon(aes(ymin = data - data_se, ymax = data + data_se, fill = method),
 								alpha = .2) +
 		labs(fill = "Method", color = "Method") +
 		scale_fill_discrete(labels = c("Banding", "Likelihood")) +

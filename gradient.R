@@ -44,7 +44,7 @@ lasso_est <- function(ntrain, X) {
 	)
 	
 	selected <- llpath[[which.min(frobs)]]
-	Lest <- covchol::cholfromldl(L = selected$cholesky, D = selected$sigma2)
+	Lest <- selected$cholesky %*% diag(sqrt(selected$sigma2))
 	
 	return(Lest)
 }
@@ -259,7 +259,7 @@ l_exp_gen <- function(repetition, nodes) {
 	for (p in nodes) {
 		densities <- c(1/p, 2/p, 3/p)
 		for (d in densities) {
-			Ltrue <- 
+			Ltrue <- gmat::mh_u(N = 1, p = p, dag = gmat::rgraph(p = p, d = d, dag = TRUE))[, , 1][p:1, p:1]
 
 			saveRDS(Ltrue,
 							file = paste0("l_exp/ltrue_", p, "_", d, "_r", repetition, ".rds"))
@@ -346,13 +346,13 @@ nodes <- c(30, 100, 200, 500, 1000)
 #### Experiment over fixed covariance matrices
 #rothman_exp_gen(nodes = nodes)
 #execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_sample, nodes = nodes, n = 200)
 
 #### Experiment over L factors
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_gen, nodes = nodes)
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-#nodes <- c(30, 100, 200)
-#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_lasso, nodes = nodes, n = 200, ntrain = 100)
+nodes <- c(30, 100, 200)
+execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_lasso, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
 

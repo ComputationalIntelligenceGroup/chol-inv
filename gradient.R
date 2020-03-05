@@ -11,7 +11,9 @@ band_est <- function(ntrain, X) {
 }
 
 # Returns an estimate of the Cholesky factor
-nestedlasso_est <- function(n, ntrain, X) {
+nestedlasso_est <- function(ntrain, X) {
+	
+	n <- nrow(X)
 	
 	Covtest <- cov(X[(ntrain + 1):n,])
 	
@@ -353,6 +355,6 @@ nodes <- c(30, 100, 200, 500, 1000)
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_gen, nodes = nodes)
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
 nodes <- c(30, 100, 200)
-execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_lasso, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_lasso, nodes = nodes, n = 200, ntrain = 100)
+execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
 

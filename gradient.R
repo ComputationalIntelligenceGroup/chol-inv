@@ -337,11 +337,20 @@ execute_parallel <- function(r, ename, emethod, ...) {
 	parallel::stopCluster(cl)
 }
 
+execute <- function(r, ename, emethod, ...) {
+	for (repetition in 1:r) {
+		dir.create(ename, showWarnings = FALSE)
+
+		emethod(repetition = repetition, ...)
+	}
+}
+
 nodes <- c(30, 100, 200, 500, 1000)
 
 #### Experiment over random covariance matrices
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_gen, nodes = nodes)
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+execute(r = 20, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_sample, nodes = nodes, n = 200)
 
@@ -354,7 +363,7 @@ nodes <- c(30, 100, 200, 500, 1000)
 #### Experiment over L factors
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_gen, nodes = nodes)
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-nodes <- c(30, 100, 200)
+#nodes <- c(30, 100, 200)
 #execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_lasso, nodes = nodes, n = 200, ntrain = 100)
-execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
 

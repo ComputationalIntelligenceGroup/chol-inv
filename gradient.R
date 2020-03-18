@@ -71,6 +71,25 @@ gradient_est <- function(ntrain, X) {
 	return(Lest)
 }
 
+# Returns an estimate of the Cholesky factor
+gradient_est_f <- function(ntrain, X) {
+	
+	n <- nrow(X)
+
+	Covtest <- cov(X[(ntrain + 1):n,])
+	
+	path <- covchol::cholpathf(X = X[1:ntrain,])
+	frobs <- lapply(
+		X = path,
+		FUN = function(res) {
+			norm(res$L %*% t(res$L) - Covtest, type = "F")
+		}
+	)
+	
+	Lest <- path[[which.min(frobs)]]$L
+	
+	return(Lest)
+}
 ####### Sigma exp: for comparison of sigmas instead of l factors
 
 # Generate true matrices
@@ -116,6 +135,24 @@ sigma_exp_sparse <- function(repetition, nodes, n, ntrain) {
 			
 			saveRDS(Sigmasparse,
 							file = paste0("sigma_exp/sigmasparse_", p, "_", d, "_r", repetition, ".rds"))
+		}
+	}
+}
+
+# Likelihood estimate
+sigma_exp_sparse_f <- function(repetition, nodes, n, ntrain) {
+	for (p in nodes) {
+		densities <- c(1/p, 2/p, 3/p)
+		for (d in densities) {
+			Sigmatrue <- readRDS(file = paste0("sigma_exp/sigmatrue_", p, "_", d, "_r", repetition, ".rds"))
+			
+			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+			
+			Lsparse <- gradient_est_f(ntrain, X = X)
+			Sigmasparse <- Lsparse %*% t(Lsparse)
+			message("d:", d, " | p:",p)
+			saveRDS(Sigmasparse,
+							file = paste0("sigma_exp/sigmasparse_f_", p, "_", d, "_r", repetition, ".rds"))
 		}
 	}
 }
@@ -278,7 +315,8 @@ l_exp_sparse <- function(repetition, nodes, n, ntrain) {
 			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Ltrue %*% t(Ltrue))
 			
 			Lest <- gradient_est(ntrain, X = X)
-			
+		        
+                        message("d: ",d, " | p: ",p) 	
 			saveRDS(Lest,
 							file = paste0("l_exp/sparse_", p, "_", d, "_r", repetition, ".rds"))
 		}
@@ -342,6 +380,7 @@ execute <- function(r, ename, emethod, ...) {
 		dir.create(ename, showWarnings = FALSE)
 
 		emethod(repetition = repetition, ...)
+               message("done repetition ", repetition) 
 	}
 }
 

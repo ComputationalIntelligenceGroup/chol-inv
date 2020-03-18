@@ -71,6 +71,26 @@ gradient_est <- function(ntrain, X) {
 	return(Lest)
 }
 
+# Returns an estimate of the Cholesky factor
+gradient_frob_est <- function(ntrain, X) {
+	
+	n <- nrow(X)
+
+	Covtest <- cov(X[(ntrain + 1):n,])
+	
+	llpath <- covchol::cholpathif(X = X[1:ntrain,])
+	frobs <- lapply(
+		X = llpath,
+		FUN = function(res) {
+			norm(res$L %*% t(res$L) - Covtest, type = "F")
+		}
+	)
+	
+	Lest <- llpath[[which.min(frobs)]]$L
+	
+	return(Lest)
+}
+
 ####### Sigma exp: for comparison of sigmas instead of l factors
 
 # Generate true matrices
@@ -116,6 +136,24 @@ sigma_exp_sparse <- function(repetition, nodes, n, ntrain) {
 			
 			saveRDS(Sigmasparse,
 							file = paste0("sigma_exp/sigmasparse_", p, "_", d, "_r", repetition, ".rds"))
+		}
+	}
+}
+
+# Likelihood frobenious estimate
+sigma_exp_frob <- function(repetition, nodes, n, ntrain) {
+	for (p in nodes) {
+		densities <- c(1/p, 2/p, 3/p)
+		for (d in densities) {
+			Sigmatrue <- readRDS(file = paste0("sigma_exp/sigmatrue_", p, "_", d, "_r", repetition, ".rds"))
+			
+			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
+			
+			Lfrob <- gradient_est(ntrain, X = X)
+			Sigmafrob <- Lfrob %*% t(Lfrob)
+			
+			saveRDS(Sigmafrob,
+							file = paste0("sigma_exp/sigmafrob_", p, "_", d, "_r", repetition, ".rds"))
 		}
 	}
 }
@@ -350,7 +388,8 @@ nodes <- c(30, 100, 200, 500, 1000)
 #### Experiment over random covariance matrices
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_gen, nodes = nodes)
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-execute(r = 20, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_frob, nodes = nodes, n = 200, ntrain = 100)
+execute(r = 200, ename = "sigma_exp", emethod = sigma_exp_frob, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_sample, nodes = nodes, n = 200)
 

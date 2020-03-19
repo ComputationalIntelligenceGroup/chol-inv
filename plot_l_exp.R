@@ -26,10 +26,9 @@ get_statistics <- function(p, r) {
 						 "tnr" = stat_tnr,
 						 "frob" = stat_frob,
 						 "f1" = stat_f1)
-	method <- c(#"lasso",
-							"nestedlasso"#,
-							#"sparse"
-							)
+	method <- c("lasso",
+				"nestedlasso",
+				"sparse_f")
 	data <- array(
 		dim = c(length(p), 3, length(method), length(fstat)),
 		dimnames = list(p = p, d = 1:3, method = method, fstat = names(fstat))
@@ -38,29 +37,56 @@ get_statistics <- function(p, r) {
 		dim = c(length(p), 3, length(method), length(fstat)),
 		dimnames = list(p = p, d = 1:3, method = method, fstat = names(fstat))
 	)
-	stat_res <- matrix(nrow = r, ncol = length(fstat))
+	stat_res <- array(
+		dim = c(r, length(fstat), length(method)),
+		dimnames = list(r = 1:r, fstat = names(fstat), method = method)
+	)
 	
 	for (i in 1:length(p)) {
 		d <- c(1/p[i], 2/p[i], 3/p[i])
 		for (j in seq_along(d)) {
-			for (m in method) {
-				for (k in 1:r) {
-					res_nestedlasso <- readRDS(file = paste0("l_exp/nestedlasso_", p[i], "_", d[j], "_r", k, ".rds"))
-					res_true <- readRDS(file = paste0("l_exp/ltrue_", p[i], "_", d[j], "_r", k, ".rds"))
-					for (l in seq(length(fstat))) {
-						stat_res[k, l] <- fstat[[l]](res_true, res_nestedlasso) 
-					}
+			for (k in 1:r) {
+				error_lasso <- FALSE
+				file_lasso <- paste0("l_exp/lasso_", p[i], "_", d[j], "_r", k, ".rds")
+				if (file.exists(file_lasso)) {
+					res_lasso <- readRDS(file = file_lasso)
+				} else {
+					error_lasso <- TRUE
 				}
+				error_nestedlasso <- FALSE
+				file_nestedlasso <- paste0("l_exp/nestedlasso_", p[i], "_", d[j], "_r", k, ".rds")
+				if (file.exists(file_nestedlasso)) {
+					res_nestedlasso <- readRDS(file = file_nestedlasso)
+				} else {
+					error_nestedlasso <- TRUE
+				}
+				res_sparse_f <- readRDS(file = paste0("l_exp/sparse_f_", p[i], "_", d[j], "_r", k, ".rds"))
+				res_true <- readRDS(file = paste0("l_exp/ltrue_", p[i], "_", d[j], "_r", k, ".rds"))
 				for (l in seq(length(fstat))) {
-					data[i, j, m, l] <- mean(stat_res[, l])
-					data_sd[i, j, m, l] <- stats::sd(stat_res[, l])
+					if (error_lasso) {
+						stat_res[k, l, "lasso"] <- NA
+					} else {
+						stat_res[k, l, "lasso"] <- fstat[[l]](res_true, res_lasso) 
+					}
+					if (error_nestedlasso) {
+						stat_res[k, l, "nestedlasso"] <- NA
+					} else {
+						stat_res[k, l, "nestedlasso"] <- fstat[[l]](res_true, res_nestedlasso) 
+					}
+					stat_res[k, l, "sparse_f"] <- fstat[[l]](res_true, res_sparse_f) 
+				}
+			}
+			for (m in method) {
+				for (l in seq(length(fstat))) {
+					data[i, j, m, l] <- mean(stat_res[, l, m])
+					data_sd[i, j, m, l] <- stats::sd(stat_res[, l, m])/sqrt(r)
 				}
 			}
 		}
 	}
 	
 	df <- data %>% as.tbl_cube(met_name = "data") %>% as_tibble()
-	df$ename <- as.factor(df$ename)
+	df$method<- as.factor(df$method)
 	df_sd <- data_sd %>% as.tbl_cube(met_name = "data_sd") %>% as_tibble()
 	df$data_sd <- df_sd$data_sd
 	
@@ -94,8 +120,8 @@ plot_comparison <- function(df, plot_title = "", plot_ylab = "", method) {
 	return(pl)
 }
 
-r <- 200
-p <- c(30, 100, 200)
+r <- 50
+p <- c(30, 100, 200, 500, 1000)
 df <- get_statistics(p = p, r = r)
 pl <- plot_comparison(df)
 ggplot2::ggsave(filename = "l_exp.pdf", plot = pl, device = "pdf", width = 11, height = 9,

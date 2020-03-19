@@ -3,7 +3,7 @@ library("dplyr")
 
 get_norms_sigma_exp <- function(p, r) {
 
-	method <- c("sample", "band")
+	method <- c("sample", "band", "sparse", "sparse_f")
 	norms <- array(
 		dim = c(length(p), 3, length(method)),
 		dimnames = list(p = p, d = 1:3, method = method)
@@ -19,19 +19,23 @@ get_norms_sigma_exp <- function(p, r) {
 		d <- c(1/p[i], 2/p[i], 3/p[i])
 		for (j in seq_along(d)) {
 			for (k in 1:r) {
-				#res_sparse <- readRDS(file = paste0("sigma_exp/sigmasparse_", p[i], "_", d[j], "_r", k, ".rds"))
+				res_sparse <- readRDS(file = paste0("sigma_exp/sigmasparse_", p[i], "_", d[j], "_r", k, ".rds"))
+				res_sparse_F <- readRDS(file = paste0("sigma_exp/sigmasparse_f_", p[i], "_", d[j], "_r", k, ".rds"))
 				res_band <- readRDS(file = paste0("sigma_exp/sigmaband_", p[i], "_", d[j], "_r", k, ".rds"))
 				res_true <- readRDS(file = paste0("sigma_exp/sigmatrue_", p[i], "_", d[j], "_r", k, ".rds"))
 				res_sample <- readRDS(file = paste0("sigma_exp/sigmasample_", p[i], "_", d[j], "_r", k, ".rds"))
-				#norms_res[k, "sparse"] <- norm(res_true - res_sparse, type = "2") 
+				norms_res[k, "sparse_f"] <- norm(res_true - res_sparse, type = "2") 
+				norms_res[k, "sparse"] <- norm(res_true - res_sparse, type = "2") 
 				norms_res[k, "band"] <- norm(res_true - res_band, type = "2")
 				norms_res[k, "sample"] <- norm(res_true - res_sample, type = "2")
 			}
-			#norms[i, j, "sparse"] <- mean(norms_res[, "sparse"])
+			norms[i, j, "sparse"] <- mean(norms_res[, "sparse"])
+			norms[i, j, "sparse_f"] <- mean(norms_res[, "sparse_f"])
 			norms[i, j, "band"] <- mean(norms_res[, "band"])
 			norms[i, j, "sample"] <- mean(norms_res[, "sample"])
 			
-			#norms_se[i, j, "sparse"] <- stats::sd(norms_res[, "sparse"])/sqrt(r)
+			norms_se[i, j, "sparse"] <- stats::sd(norms_res[, "sparse"])/sqrt(r)
+			norms_se[i, j, "sparse_f"] <- stats::sd(norms_res[, "sparse_f"])/sqrt(r)
 			norms_se[i, j, "band"] <- stats::sd(norms_res[, "band"])/sqrt(r)
 			norms_se[i, j, "sample"] <- stats::sd(norms_res[, "sample"])/sqrt(r)
 		}
@@ -71,7 +75,7 @@ plot_sigma_exp <- function(df, plot_title = "", plot_ylab = "") {
 	return(pl)
 }
 
-r <- 200
+r <- 30 
 p <- c(30, 100, 200, 500, 1000)
 df <- get_norms_sigma_exp(p = p, r = r)
 pl <- plot_sigma_exp(df)

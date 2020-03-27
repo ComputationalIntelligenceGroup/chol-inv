@@ -72,25 +72,24 @@ gradient_est <- function(ntrain, X) {
 }
 
 # Returns an estimate of the Cholesky factor
-gradient_frob_est <- function(ntrain, X) {
+gradient_est_f <- function(ntrain, X) {
 	
 	n <- nrow(X)
 
 	Covtest <- cov(X[(ntrain + 1):n,])
 	
-	llpath <- covchol::cholpathif(X = X[1:ntrain,])
+	path <- covchol::cholpathf(X = X[1:ntrain,])
 	frobs <- lapply(
-		X = llpath,
+		X = path,
 		FUN = function(res) {
 			norm(res$L %*% t(res$L) - Covtest, type = "F")
 		}
 	)
 	
-	Lest <- llpath[[which.min(frobs)]]$L
+	Lest <- path[[which.min(frobs)]]$L
 	
 	return(Lest)
 }
-
 ####### Sigma exp: for comparison of sigmas instead of l factors
 
 # Generate true matrices
@@ -140,8 +139,8 @@ sigma_exp_sparse <- function(repetition, nodes, n, ntrain) {
 	}
 }
 
-# Likelihood frobenious estimate
-sigma_exp_frob <- function(repetition, nodes, n, ntrain) {
+# Likelihood estimate
+sigma_exp_sparse_f <- function(repetition, nodes, n, ntrain) {
 	for (p in nodes) {
 		densities <- c(1/p, 2/p, 3/p)
 		for (d in densities) {
@@ -149,11 +148,11 @@ sigma_exp_frob <- function(repetition, nodes, n, ntrain) {
 			
 			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Sigmatrue)
 			
-			Lfrob <- gradient_est(ntrain, X = X)
-			Sigmafrob <- Lfrob %*% t(Lfrob)
-			
-			saveRDS(Sigmafrob,
-							file = paste0("sigma_exp/sigmafrob_", p, "_", d, "_r", repetition, ".rds"))
+			Lsparse <- gradient_est_f(ntrain, X = X)
+			Sigmasparse <- Lsparse %*% t(Lsparse)
+			message("d:", d, " | p:",p)
+			saveRDS(Sigmasparse,
+							file = paste0("sigma_exp/sigmasparse_f_", p, "_", d, "_r", repetition, ".rds"))
 		}
 	}
 }
@@ -316,7 +315,8 @@ l_exp_sparse <- function(repetition, nodes, n, ntrain) {
 			X <- MASS::mvrnorm(n, rep(0, p), Sigma = Ltrue %*% t(Ltrue))
 			
 			Lest <- gradient_est(ntrain, X = X)
-			
+		        
+                        message("d: ",d, " | p: ",p) 	
 			saveRDS(Lest,
 							file = paste0("l_exp/sparse_", p, "_", d, "_r", repetition, ".rds"))
 		}
@@ -376,10 +376,11 @@ execute_parallel <- function(r, ename, emethod, ...) {
 }
 
 execute <- function(r, ename, emethod, ...) {
-	for (repetition in 1:r) {
+	for (repetition in r) {
 		dir.create(ename, showWarnings = FALSE)
 
 		emethod(repetition = repetition, ...)
+               message("done repetition ", repetition) 
 	}
 }
 
@@ -389,7 +390,7 @@ r <- 50
 #### Experiment over random covariance matrices
 #execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_gen, nodes = nodes)
 #execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_frob, nodes = nodes, n = 200, ntrain = 100)
+#execute(r = 21:50, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_sample, nodes = nodes, n = 200)
 

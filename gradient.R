@@ -376,12 +376,10 @@ execute_parallel <- function(r, ename, emethod, ...) {
 }
 
 execute <- function(r, ename, emethod, ...) {
-	for (repetition in r) {
-		dir.create(ename, showWarnings = FALSE)
+	dir.create(ename, showWarnings = FALSE)
 
-		emethod(repetition = repetition, ...)
-               message("done repetition ", repetition) 
-	}
+	emethod(repetition = repetition, ...)
+    message("done repetition ", repetition) 
 }
 
 nodes <- c(30, 100, 200, 500, 1000)
@@ -390,13 +388,12 @@ r <- 50
 #### Experiment over random covariance matrices
 #execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_gen, nodes = nodes)
 #execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-#execute(r = 21:50, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_sample, nodes = nodes, n = 200)
 
 #### Experiment over fixed covariance matrices
 #rothman_exp_gen(nodes = nodes)
-execute_parallel(r = r, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = r, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = r, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
 #execute_parallel(r = r, ename = "rothman_exp", emethod = rothman_exp_sample, nodes = nodes, n = 200)
 

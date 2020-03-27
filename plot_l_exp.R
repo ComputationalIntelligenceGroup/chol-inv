@@ -28,7 +28,8 @@ get_statistics <- function(p, r) {
 						 "f1" = stat_f1)
 	method <- c("lasso",
 				"nestedlasso",
-				"sparse_f")
+				"sparse_f",
+				"sparse")
 	data <- array(
 		dim = c(length(p), 3, length(method), length(fstat)),
 		dimnames = list(p = p, d = 1:3, method = method, fstat = names(fstat))
@@ -61,6 +62,7 @@ get_statistics <- function(p, r) {
 					error_nestedlasso <- TRUE
 				}
 				res_sparse_f <- readRDS(file = paste0("l_exp/sparse_f_", p[i], "_", d[j], "_r", k, ".rds"))
+				res_sparse <- readRDS(file = paste0("l_exp/sparse_", p[i], "_", d[j], "_r", k, ".rds"))
 				res_true <- readRDS(file = paste0("l_exp/ltrue_", p[i], "_", d[j], "_r", k, ".rds"))
 				for (l in seq(length(fstat))) {
 					if (error_lasso) {
@@ -74,6 +76,7 @@ get_statistics <- function(p, r) {
 						stat_res[k, l, "nestedlasso"] <- fstat[[l]](res_true, res_nestedlasso) 
 					}
 					stat_res[k, l, "sparse_f"] <- fstat[[l]](res_true, res_sparse_f) 
+					stat_res[k, l, "sparse"] <- fstat[[l]](res_true, res_sparse) 
 				}
 			}
 			for (m in method) {

@@ -378,8 +378,7 @@ execute_parallel <- function(r, ename, emethod, ...) {
 execute <- function(r, ename, emethod, ...) {
 	dir.create(ename, showWarnings = FALSE)
 
-	emethod(repetition = repetition, ...)
-    message("done repetition ", repetition) 
+	emethod(repetition = r, ...)
 }
 
 nodes <- c(30, 100, 200, 500, 1000)

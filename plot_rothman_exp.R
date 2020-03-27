@@ -26,7 +26,7 @@ get_statistics <- function(p, r) {
 						 "tnr" = stat_tnr,
 						 "opnorm" = stat_opnorm,
 						 "f1" = stat_f1)
-	method <- c("sparse_f", "band", "sample")
+	method <- c("sparse_f", "sparse", "band", "sample")
 	data <- array(
 		dim = c(length(p), 3, length(method), length(fstat)),
 		dimnames = list(p = p, sigma = 1:3, method = method, fstat = names(fstat))
@@ -44,12 +44,12 @@ get_statistics <- function(p, r) {
 		for (sigma in 1:3) {
 			sigmatrue <- readRDS(file = paste0("rothman_exp/sigma", sigma, "true_", p[i], ".rds"))
 			for (k in 1:r) {
-				#sigmasparse <- readRDS(file = paste0("rothman_exp/sigma", sigma, "sparse_", p[i], "_r", k, ".rds"))
+				sigmasparse <- readRDS(file = paste0("rothman_exp/sigma", sigma, "sparse_", p[i], "_r", k, ".rds"))
 				sigmasparse_f <- readRDS(file = paste0("rothman_exp/sigma", sigma, "sparse_f_", p[i], "_r", k, ".rds"))
 				sigmaband <- readRDS(file = paste0("rothman_exp/sigma", sigma, "band_", p[i], "_r", k, ".rds"))
 				sigmasample <- readRDS(file = paste0("rothman_exp/sigma", sigma, "sample_", p[i], "_r", k, ".rds"))
 				for (l in seq(length(fstat))) {
-					#stat_res[k, l, "sparse"] <- fstat[[l]](sigmatrue, sigmasparse)
+					stat_res[k, l, "sparse"] <- fstat[[l]](sigmatrue, sigmasparse)
 					stat_res[k, l, "sparse_f"] <- fstat[[l]](sigmatrue,	sigmasparse_f)
 					stat_res[k, l, "band"] <- fstat[[l]](sigmatrue, sigmaband)
 					stat_res[k, l, "sample"] <- fstat[[l]](sigmatrue, sigmasample)

@@ -385,24 +385,25 @@ execute <- function(r, ename, emethod, ...) {
 }
 
 nodes <- c(30, 100, 200, 500, 1000)
+r <- 50
 
 #### Experiment over random covariance matrices
-#execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_gen, nodes = nodes)
-#execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_gen, nodes = nodes)
+#execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
 #execute(r = 21:50, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = 200, ename = "sigma_exp", emethod = sigma_exp_sample, nodes = nodes, n = 200)
+#execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_sample, nodes = nodes, n = 200)
 
 #### Experiment over fixed covariance matrices
 #rothman_exp_gen(nodes = nodes)
-#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = 200, ename = "rothman_exp", emethod = rothman_exp_sample, nodes = nodes, n = 200)
+execute_parallel(r = r, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = r, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = r, ename = "rothman_exp", emethod = rothman_exp_sample, nodes = nodes, n = 200)
 
 #### Experiment over L factors
-#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_gen, nodes = nodes)
-#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = r, ename = "l_exp", emethod = l_exp_gen, nodes = nodes)
+#execute_parallel(r = r, ename = "l_exp", emethod = l_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
 #nodes <- c(30, 100, 200)
-#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_lasso, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = 200, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = r, ename = "l_exp", emethod = l_exp_lasso, nodes = nodes, n = 200, ntrain = 100)
+#execute_parallel(r = r, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
 

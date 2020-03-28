@@ -1,23 +1,27 @@
 library("ggplot2")
 library("dplyr")
 
-stat_tpr <- function(ltrue, lest) {
-	p <- ncol(ltrue)
-	return((sum(ltrue != 0 & lest != 0) - p)/(sum(ltrue != 0) - p))
+stat_tpr <- function(sigmatrue, sigmaest) {
+	p <- ncol(sigmatrue)
+	tp <- sum(sigmatrue != 0 & sigmaest != 0) - p
+	return(tp/(sum(sigmatrue != 0) - p))
 }
-stat_tnr <- function(ltrue, lest) {
-	p <- ncol(ltrue)
-	tn <- sum(ltrue == 0 & lest == 0) - p*(p - 1)/2
-	return(tn/(sum(ltrue == 0) - (p * (p - 1) / 2)))
+stat_tnr <- function(sigmatrue, sigmaest) {
+	p <- ncol(sigmatrue)
+	tn <- sum(sigmatrue == 0 & sigmaest == 0)
+	if (sum(sigmatrue == 0) == 0) {
+		return(1)
+	}
+	return(tn/sum(sigmatrue == 0))
 }
-stat_opnorm <- function(ltrue, lest) {
-	return(norm(lest - ltrue, type = "2"))
+stat_opnorm <- function(sigmatrue, sigmaest) {
+	return(norm(sigmaest - sigmatrue, type = "2"))
 }
-stat_f1 <- function(ltrue, lest) {
-	p <- ncol(ltrue)
-	tp <- sum(ltrue != 0 & lest != 0) - p
-	fn <- sum(ltrue != 0 & lest == 0)
-	fp <- sum(ltrue == 0 & lest != 0)
+stat_f1 <- function(sigmatrue, sigmaest) {
+	p <- ncol(sigmatrue)
+	tp <- sum(sigmatrue != 0 & sigmaest != 0) - p
+	fn <- sum(sigmatrue != 0 & sigmaest == 0)
+	fp <- sum(sigmatrue == 0 & sigmaest != 0)
 	return(2*tp/(2*tp + fp + fn))
 }
 

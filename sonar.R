@@ -54,16 +54,12 @@ for (t in type) {
 
 	Covtest <- cov(Xtest)
 	filled.contour((Covtest[60:1,]), color.palette = rainbow, asp = 1,
-	plot.title = paste0("Sample covariance test data. Type = ", t))
-	#singular matrix
-	#filled.contour((t(chol(Covtest))[60:1,]), color.palette = rainbow)
+		plot.title = paste0("Sample covariance test data. Type = ", t))
 	
 	Lest <- gradient_est_f(ntrain = ntrain, X)
-	filled.contour((Lest[60:1,]), color.palette = rainbow, asp = 1,
-	plot.title = paste0("Estimated Cholesky factor. Type = ", t))
 	Sigmaest <- Lest %*% t(Lest)
 	filled.contour((Sigmaest[60:1,]), color.palette = rainbow, asp = 1,
-	plot.title = paste0("Estimated covariance matrix. Type = ", t))
+		plot.title = paste0("Estimated covariance matrix. Type = ", t))
 
 	means <- colMeans(Xtest)
 }

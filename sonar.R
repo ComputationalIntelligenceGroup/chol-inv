@@ -44,6 +44,8 @@ gradient_est_f <- function(ntrain, X) {
 	return(Lest)
 }
 
+pdf(file = "../sparsecholeskycovariance/img/sonar.pdf")
+
 for (t in type) {
 	X <- data[data$V61 == t,][, -61]
 	ntrain <- floor(nrow(X)/2)
@@ -51,14 +53,17 @@ for (t in type) {
 	Xtest <- X[(ntrain + 1):nrow(X), ]
 
 	Covtest <- cov(Xtest)
-	filled.contour((Covtest[60:1,]), color.palette = rainbow, asp = 1)
+	filled.contour((Covtest[60:1,]), color.palette = rainbow, asp = 1,
+	plot.title = paste0("Sample covariance test data. Type = ", t))
 	#singular matrix
 	#filled.contour((t(chol(Covtest))[60:1,]), color.palette = rainbow)
 	
 	Lest <- gradient_est_f(ntrain = ntrain, X)
-	filled.contour((Lest[60:1,]), color.palette = rainbow)
+	filled.contour((Lest[60:1,]), color.palette = rainbow, asp = 1,
+	plot.title = paste0("Estimated Cholesky factor. Type = ", t))
 	Sigmaest <- Lest %*% t(Lest)
-	filled.contour((Sigmaest[60:1,]), color.palette = rainbow, asp = 1)
+	filled.contour((Sigmaest[60:1,]), color.palette = rainbow, asp = 1,
+	plot.title = paste0("Estimated covariance matrix. Type = ", t))
 
 	means <- colMeans(Xtest)
 }

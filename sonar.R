@@ -8,7 +8,7 @@ devtools::install_github("irenecrsn/covchol")
 data <- read.table("data/sonar.all-data", sep = ",", header = FALSE)
 
 type <- c("R", "M")
-est <- c("sample", "sparse_f")
+est <- c("sample", "sparse", "sparse_f", "band", "lasso")
 covs <- array(dim = c(length(type), length(est), 60, 60),
 			dimnames = list(type = type, est = est, rows = 1:60, cols = 1:60))
 
@@ -20,8 +20,16 @@ for (t in type) {
 
 	covs[t, "sample", ,] <- cov(Xtest)
 	
+	Lest <- gradient_est(ntrain = ntrain, X)
+	covs[t, "sparse", ,] <- Lest %*% t(Lest)
+	
 	Lest <- gradient_est_f(ntrain = ntrain, X)
 	covs[t, "sparse_f", ,] <- Lest %*% t(Lest)
+
+	Lest <- lasso_est(ntrain = ntrain, X)
+	covs[t, "lasso", ,] <- Lest %*% t(Lest)
+
+	covs[t, "band", , ] <- band_est(ntrain = ntrain, X)
 }
 
 df <- covs %>% as.tbl_cube(met_name = "covs") %>% as_tibble()
@@ -29,11 +37,14 @@ df$type <- as.factor(df$type)
 df$est <- as.factor(df$est)
 	
 pl <- ggplot(df, aes(x = rows, y = cols, z = covs, fill = covs)) +
-	facet_grid(rows = vars(type), cols = vars(est)) +
+	facet_grid(cols = vars(type), rows = vars(est)) +
 	geom_tile() + coord_equal() +
-	geom_contour(color = "white", alpha = 0.5) +
+	geom_contour(color = "white", alpha = 0.75) +
 	scale_fill_distiller(palette = "Spectral", na.value = "white") +
-	theme_bw()
+	theme_bw() +
+	xlab("") +
+	ylab("") +
+	ylim(60, 0)
 
 ggsave(filename = paste0("sonar_covs.pdf"), plot = pl, device = "pdf",
 	path = "../sparsecholeskycovariance/img/")

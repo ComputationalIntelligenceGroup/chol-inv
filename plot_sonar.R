@@ -1,7 +1,9 @@
 library("ggplot2")
 library("dplyr")
 
-readRDS(file = "data/covs.rds")
+type <- c("R", "M")
+est <- c("sample", "sparse", "sparse_f", "band", "lasso")
+covs <- readRDS(file = "data/covs.rds")
 
 ### Plot covariance heatmaps
 df <- covs %>% as.tbl_cube(met_name = "covs") %>% as_tibble()
@@ -37,7 +39,7 @@ df$est <- as.factor(df$est)
 
 pl <- ggplot(df, aes(eigens, group = est, color = est)) +
 	facet_grid(cols = vars(type)) +
-	geom_freqpol(bins = nclass.FD(df$eigens))
+	geom_freqpoly(bins = nclass.FD(df$eigens)) +
 	theme_bw() +
 	xlab("Eigenvalue") +
 	ylab("Absolute frequency") 

@@ -1,6 +1,3 @@
-library("ggplot2")
-library("dplyr")
-
 source("lib.R")
 
 devtools::install_github("irenecrsn/covchol")
@@ -32,22 +29,7 @@ for (t in type) {
 	covs[t, "band", , ] <- band_est(ntrain = ntrain, X)
 }
 
-df <- covs %>% as.tbl_cube(met_name = "covs") %>% as_tibble()
-df$type <- as.factor(df$type)
-df$est <- as.factor(df$est)
-	
-pl <- ggplot(df, aes(x = rows, y = cols, z = covs, fill = covs)) +
-	facet_grid(cols = vars(type), rows = vars(est)) +
-	geom_tile() + coord_equal() +
-	geom_contour(color = "white", alpha = 0.75) +
-	scale_fill_distiller(palette = "Spectral", na.value = "white") +
-	theme_bw() +
-	xlab("") +
-	ylab("") +
-	ylim(60, 0)
-
-ggsave(filename = paste0("sonar_covs.pdf"), plot = pl, device = "pdf",
-	path = "../sparsecholeskycovariance/img/")
+saveRDS(covs, file = "data/covs.rds")
 
 #rng <- range(c(S_rocks, S_mines))
 #filled.contour((S_mines[60:1,]) - S_rocks[60:1,], 

@@ -1,95 +1,7 @@
-source("nestedlasso.r")
-source("lasso.r")
+source("lib.R")
+
 devtools::install_github("irenecrsn/covchol")
 
-# Returns an estimate of the covariance matrix
-band_est <- function(ntrain, X) {
-
-	Sigmaest <- PDSCE::band.chol.cv(x = X, n.tr = ntrain, nsplits = 1)$sigma
-	
-	return(Sigmaest)
-}
-
-# Returns an estimate of the Cholesky factor
-nestedlasso_est <- function(ntrain, X) {
-	
-	n <- nrow(X)
-	
-	Covtest <- cov(X[(ntrain + 1):n,])
-	
-	llpath <- nested.lasso.path(X = X[1:ntrain,])
-	frobs <- lapply(
-		X = llpath,
-		FUN = function(res) {
-			norm(res$sigma - Covtest, type = "F")
-		}
-	)
-	
-	selected <- llpath[[which.min(frobs)]]
-	Lest <- selected$cholesky %*% diag(sqrt(selected$sigma2))
-	
-	return(Lest)
-}
-
-# Returns an estimate of the Cholesky factor
-lasso_est <- function(ntrain, X) {
-	n <- nrow(X)
-	
-	Covtest <- cov(X[(ntrain + 1):n,])
-	
-	llpath <- lasso.path(X = X[1:ntrain,])
-	frobs <- lapply(
-		X = llpath,
-		FUN = function(res) {
-			norm(res$sigma - Covtest, type = "F")
-		}
-	)
-	
-	selected <- llpath[[which.min(frobs)]]
-	Lest <- selected$cholesky %*% diag(sqrt(selected$sigma2))
-	
-	return(Lest)
-}
-
-# Returns an estimate of the Cholesky factor
-gradient_est <- function(ntrain, X) {
-	
-	n <- nrow(X)
-
-	Covtest <- cov(X[(ntrain + 1):n,])
-	
-	llpath <- covchol::cholpath(X = X[1:ntrain,])
-	frobs <- lapply(
-		X = llpath,
-		FUN = function(res) {
-			norm(res$L %*% t(res$L) - Covtest, type = "F")
-		}
-	)
-	
-	Lest <- llpath[[which.min(frobs)]]$L
-	
-	return(Lest)
-}
-
-# Returns an estimate of the Cholesky factor
-gradient_est_f <- function(ntrain, X) {
-	
-	n <- nrow(X)
-
-	Covtest <- cov(X[(ntrain + 1):n,])
-	
-	path <- covchol::cholpathf(X = X[1:ntrain,])
-	frobs <- lapply(
-		X = path,
-		FUN = function(res) {
-			norm(res$L %*% t(res$L) - Covtest, type = "F")
-		}
-	)
-	
-	Lest <- path[[which.min(frobs)]]$L
-	
-	return(Lest)
-}
 ####### Sigma exp: for comparison of sigmas instead of l factors
 
 # Generate true matrices
@@ -355,51 +267,9 @@ l_exp_nestedlasso <- function(repetition, nodes, n, ntrain) {
 	}
 }
 
-execute_parallel <- function(r, ename, emethod, ...) {
-	n_cores <- min(r, parallel::detectCores() - 2)
-	cl <- parallel::makeCluster(n_cores, outfile = "")
-	doParallel::registerDoParallel(cl)
-	
-	iter <- foreach::foreach(repetition = seq(r), .combine = rbind,
-													 .export = c("band_est", "gradient_est", 
-													 						"nestedlasso_est", "lasso_est",
-													 						"nested.lasso.path", "autoReg", "nested.lasso.cov",
-													 						"lasso.path", "lasso.cov"))
-	foreach::"%dopar%"(iter, {
-		dir.create(ename, showWarnings = FALSE)
-		
-		emethod(repetition = repetition, ...)
-
-	})
-	
-	parallel::stopCluster(cl)
-}
-
 execute <- function(r, ename, emethod, ...) {
 	dir.create(ename, showWarnings = FALSE)
 
 	emethod(repetition = r, ...)
 }
-
-nodes <- c(30, 100, 200, 500, 1000)
-r <- 50
-
-#### Experiment over random covariance matrices
-#execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_gen, nodes = nodes)
-#execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_band, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = r, ename = "sigma_exp", emethod = sigma_exp_sample, nodes = nodes, n = 200)
-
-#### Experiment over fixed covariance matrices
-#rothman_exp_gen(nodes = nodes)
-#execute_parallel(r = r, ename = "rothman_exp", emethod = rothman_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = r, ename = "rothman_exp", emethod = rothman_exp_band, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = r, ename = "rothman_exp", emethod = rothman_exp_sample, nodes = nodes, n = 200)
-
-#### Experiment over L factors
-#execute_parallel(r = r, ename = "l_exp", emethod = l_exp_gen, nodes = nodes)
-#execute_parallel(r = r, ename = "l_exp", emethod = l_exp_sparse, nodes = nodes, n = 200, ntrain = 100)
-#nodes <- c(30, 100, 200)
-#execute_parallel(r = r, ename = "l_exp", emethod = l_exp_lasso, nodes = nodes, n = 200, ntrain = 100)
-#execute_parallel(r = r, ename = "l_exp", emethod = l_exp_nestedlasso, nodes = nodes, n = 200, ntrain = 100)
 

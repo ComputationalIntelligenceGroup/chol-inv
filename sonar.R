@@ -4,46 +4,6 @@ data <- read.table("data/sonar.all-data", sep = ",", header = FALSE)
 
 type <- c("R", "M")
 
-# Returns an estimate of the Cholesky factor
-gradient_est <- function(ntrain, X) {
-	
-	n <- nrow(X)
-
-	Covtest <- cov(X[(ntrain + 1):n,])
-	
-	llpath <- covchol::cholpath(X = X[1:ntrain,])
-	frobs <- lapply(
-		X = llpath,
-		FUN = function(res) {
-			norm(res$L %*% t(res$L) - Covtest, type = "F")
-		}
-	)
-	
-	Lest <- llpath[[which.min(frobs)]]$L
-	
-	return(Lest)
-}
-
-# Returns an estimate of the Cholesky factor
-gradient_est_f <- function(ntrain, X) {
-	
-	n <- nrow(X)
-
-	Covtest <- cov(X[(ntrain + 1):n,])
-	
-	path <- covchol::cholpathf(X = X[1:ntrain,])
-	frobs <- lapply(
-		X = path,
-		FUN = function(res) {
-			norm(res$L %*% t(res$L) - Covtest, type = "F")
-		}
-	)
-	
-	Lest <- path[[which.min(frobs)]]$L
-	
-	return(Lest)
-}
-
 pdf(file = "../sparsecholeskycovariance/img/sonar.pdf")
 
 for (t in type) {

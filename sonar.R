@@ -1,10 +1,16 @@
+library("ggplot2")
+library("dplyr")
+
+source("lib.R")
+
 devtools::install_github("irenecrsn/covchol")
 
 data <- read.table("data/sonar.all-data", sep = ",", header = FALSE)
 
 type <- c("R", "M")
-
-pdf(file = "../sparsecholeskycovariance/img/sonar.pdf")
+est <- c("sample", "sparse_f")
+covs <- array(dim = c(length(type), length(est), 60, 60),
+			dimnames = list(type = type, est = est, rows = 1:60, cols = 1:60))
 
 for (t in type) {
 	X <- data[data$V61 == t,][, -61]
@@ -12,18 +18,25 @@ for (t in type) {
 	Xtrain <- X[1:ntrain, ]
 	Xtest <- X[(ntrain + 1):nrow(X), ]
 
-	Covtest <- cov(Xtest)
-	filled.contour((Covtest[60:1,]), color.palette = rainbow, asp = 1,
-		plot.title = paste0("Sample covariance test data. Type = ", t))
+	covs[t, "sample", ,] <- cov(Xtest)
 	
 	Lest <- gradient_est_f(ntrain = ntrain, X)
-	Sigmaest <- Lest %*% t(Lest)
-	filled.contour((Sigmaest[60:1,]), color.palette = rainbow, asp = 1,
-		plot.title = paste0("Estimated covariance matrix. Type = ", t))
-
-	means <- colMeans(Xtest)
+	covs[t, "sparse_f", ,] <- Lest %*% t(Lest)
 }
 
+df <- covs %>% as.tbl_cube(met_name = "covs") %>% as_tibble()
+df$type <- as.factor(df$type)
+df$est <- as.factor(df$est)
+	
+pl <- ggplot(df, aes(x = rows, y = cols, z = covs, fill = covs)) +
+	facet_grid(rows = vars(type), cols = vars(est)) +
+	geom_tile() + coord_equal() +
+	geom_contour(color = "white", alpha = 0.5) +
+	scale_fill_distiller(palette = "Spectral", na.value = "white") +
+	theme_bw()
+
+ggsave(filename = paste0("sonar_covs.pdf"), plot = pl, device = "pdf",
+	path = "../sparsecholeskycovariance/img/")
 
 #rng <- range(c(S_rocks, S_mines))
 #filled.contour((S_mines[60:1,]) - S_rocks[60:1,], 

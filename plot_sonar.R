@@ -52,6 +52,9 @@ ggsave(filename = paste0("sonar_eigens.pdf"), plot = pl, device = "pdf",
 
 preds <- readRDS(file = "data/preds.rds")
 stat_tpr <- function(pred, true, val) {
+	if (sum(true == val) == 0) {
+		return(1)
+	}
 	tp <- sum(true == val & pred == val)
 	return(tp/(sum(true == val)))
 }
@@ -69,6 +72,7 @@ stat_f1 <- function(pred, true, val) {
 	return(2*tp/(2*tp + fp + fn))
 }
 
+est <- c("sparse_f", "band")
 fstat <- c("tpr" = stat_tpr,
 			"tnr" = stat_tnr,
 			 "f1" = stat_f1)
@@ -79,7 +83,7 @@ stat <- array(
 
 for (t in type) {
 	for (e in est) {
-		for (f in fstat) {
+		for (f in names(fstat)) {
 			stat[t, f, e] <- fstat[[f]](pred = preds[, e], 
 										true = preds[, "true"], 
 										val = t)

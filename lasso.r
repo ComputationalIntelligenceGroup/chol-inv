@@ -7,7 +7,7 @@ lasso.path <- function(X){
 	
 	results <- list()
 	for (i in 1:length(lambdas)){
-		results[[i]] <- nested.lasso.cov(x = X_centered, lam = lambdas[i])
+		results[[i]] <- lasso.cov(x = X_centered, lam = lambdas[i])
 	}
 	return(results)
 }

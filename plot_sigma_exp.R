@@ -1,37 +1,7 @@
-library("ggplot2")
-library("dplyr")
-
-stat_tpr <- function(sigmatrue, sigmaest) {
-	p <- ncol(sigmatrue)
-	tp <- sum(sigmatrue != 0 & sigmaest != 0) - p
-	return(tp/(sum(sigmatrue != 0) - p))
-}
-stat_tnr <- function(sigmatrue, sigmaest) {
-	p <- ncol(sigmatrue)
-	tn <- sum(sigmatrue == 0 & sigmaest == 0)
-	if (sum(sigmatrue == 0) == 0) {
-		return(1)
-	}
-	return(tn/sum(sigmatrue == 0))
-}
-stat_opnorm <- function(sigmatrue, sigmaest) {
-	return(norm(sigmaest - sigmatrue, type = "2"))
-}
-stat_f1 <- function(sigmatrue, sigmaest) {
-	p <- ncol(sigmatrue)
-	tp <- sum(sigmatrue != 0 & sigmaest != 0) - p
-	fn <- sum(sigmatrue != 0 & sigmaest == 0)
-	fp <- sum(sigmatrue == 0 & sigmaest != 0)
-	return(2*tp/(2*tp + fp + fn))
-}
+source("plot_lib.R")
 
 get_statistics <- function(p, r) {
-
-	fstat <- c("tpr" = stat_tpr,
-						 "tnr" = stat_tnr,
-						 "opnorm" = stat_opnorm,
-						 "f1" = stat_f1)
-	method <- c("sample", "band", "sparse", "sparse_f")
+	method <- c("sample", "band", "grad_lik", "grad_frob")
 	data <- array(
 		dim = c(length(p), 3, length(method), length(fstat)),
 		dimnames = list(p = p, d = 1:3, method = method, fstat = names(fstat))
@@ -55,8 +25,8 @@ get_statistics <- function(p, r) {
 				sigmatrue <- readRDS(file = paste0("sigma_exp/sigmatrue_", p[i], "_", d[j], "_r", k, ".rds"))
 				sigmasample <- readRDS(file = paste0("sigma_exp/sigmasample_", p[i], "_", d[j], "_r", k, ".rds"))
 				for (l in seq(length(fstat))) {
-					stat_res[k, l, "sparse_f"] <- fstat[[l]](sigmatrue, sigmasparse_f) 
-					stat_res[k, l, "sparse"] <- fstat[[l]](sigmatrue, sigmasparse) 
+					stat_res[k, l, "grad_frob"] <- fstat[[l]](sigmatrue, sigmasparse_f) 
+					stat_res[k, l, "grad_lik"] <- fstat[[l]](sigmatrue, sigmasparse) 
 					stat_res[k, l, "band"] <- fstat[[l]](sigmatrue, sigmaband)
 					stat_res[k, l, "sample"] <- fstat[[l]](sigmatrue, sigmasample)
 				}
@@ -98,9 +68,7 @@ plot_sigma_exp <- function(df, plot_title = "", plot_ylab = "") {
 		pl <- pl +
 			geom_ribbon(aes(ymin = data - data_se, ymax = data + data_se, fill = method),
 									alpha = .2) +
-			labs(fill = "Method", color = "Method")# +
-			#scale_fill_discrete(labels = c("Banding", "Likelihood")) +
-			#scale_color_discrete(labels = c("Banding", "Likelihood"))
+			labs(fill = "Method", color = "Method")
 	
 	return(pl)
 }
@@ -109,6 +77,6 @@ r <- 30
 p <- c(30, 100, 200, 500, 1000)
 df <- get_statistics(p = p, r = r)
 pl <- plot_sigma_exp(df)
-ggplot2::ggsave(filename = "sigma_exp.pdf", plot = pl, device = "pdf", width = 11, height = 9,
+ggplot2::ggsave(filename = "sigma_exp.pdf", plot = pl, device = "pdf", width = 11, height = 6,
 								path = "../sparsecholeskycovariance/img/")
 	

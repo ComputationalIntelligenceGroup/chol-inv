@@ -1,35 +1,10 @@
-library("ggplot2")
-library("dplyr")
-
-stat_tpr <- function(ltrue, lest) {
-	p <- ncol(ltrue)
-	return((sum(ltrue != 0 & lest != 0) - p)/(sum(ltrue != 0) - p))
-}
-stat_tnr <- function(ltrue, lest) {
-	p <- ncol(ltrue)
-	tn <- sum(ltrue == 0 & lest == 0) - p*(p - 1)/2
-	return(tn/(sum(ltrue == 0) - (p * (p - 1) / 2)))
-}
-stat_frob <- function(ltrue, lest) {
-	return(norm(lest - ltrue, type = "F"))
-}
-stat_f1 <- function(ltrue, lest) {
-	p <- ncol(ltrue)
-	tp <- sum(ltrue != 0 & lest != 0) - p
-	fn <- sum(ltrue != 0 & lest == 0)
-	fp <- sum(ltrue == 0 & lest != 0)
-	return(2*tp/(2*tp + fp + fn))
-}
+source("plot_lib.R")
 
 get_statistics <- function(p, r) {
-	fstat <- c("tpr" = stat_tpr,
-						 "tnr" = stat_tnr,
-						 "frob" = stat_frob,
-						 "f1" = stat_f1)
 	method <- c("lasso",
 				"nestedlasso",
-				"sparse_f",
-				"sparse")
+				"grad_lik",
+				"grad_frob")
 	data <- array(
 		dim = c(length(p), 3, length(method), length(fstat)),
 		dimnames = list(p = p, d = 1:3, method = method, fstat = names(fstat))
@@ -75,8 +50,8 @@ get_statistics <- function(p, r) {
 					} else {
 						stat_res[k, l, "nestedlasso"] <- fstat[[l]](res_true, res_nestedlasso) 
 					}
-					stat_res[k, l, "sparse_f"] <- fstat[[l]](res_true, res_sparse_f) 
-					stat_res[k, l, "sparse"] <- fstat[[l]](res_true, res_sparse) 
+					stat_res[k, l, "grad_frob"] <- fstat[[l]](res_true, res_sparse_f) 
+					stat_res[k, l, "grad_lik"] <- fstat[[l]](res_true, res_sparse) 
 				}
 			}
 			for (m in method) {
@@ -116,9 +91,7 @@ plot_comparison <- function(df, plot_title = "", plot_ylab = "", method) {
 		pl <- pl +
 			geom_ribbon(aes(ymin = data - data_sd, ymax = data + data_sd, fill = method),
 									alpha = .2) +
-			labs(fill = "Method", color = "Method") #+
-			#scale_fill_discrete(labels = c("Lasso", "Nested Lasso", "Likelihood")) +
-			#scale_color_discrete(labels = c("Lasso", "Nested Lasso", "Likelihood"))
+			labs(fill = "Method", color = "Method") 
 	
 	return(pl)
 }
@@ -127,7 +100,7 @@ r <- 50
 p <- c(30, 100, 200, 500, 1000)
 df <- get_statistics(p = p, r = r)
 pl <- plot_comparison(df)
-ggplot2::ggsave(filename = "l_exp.pdf", plot = pl, device = "pdf", width = 11, height = 9,
+ggplot2::ggsave(filename = "l_exp.pdf", plot = pl, device = "pdf", width = 11, height = 6,
 								path = "../sparsecholeskycovariance/img/")
 
 	

@@ -15,7 +15,7 @@ cov_sparse_f <- function(ntrain, X) {
 }
 
 cov_sample <- function(ntrain, X) {
-	return(cov(data))
+	return(cov(X))
 }
 
 cov_band <- function(ntrain, X) {
@@ -27,15 +27,17 @@ cov_lasso <- function(ntrain, X) {
 	return(Lest %*% t(Lest))
 }
 
-f_cov <- c("sparse" = cov_sparse,
-			"sparse_f" = cov_sparse_f,
+f_cov <- c("grad_lik" = cov_sparse,
+			"grad_frob" = cov_sparse_f,
 			"sample" = cov_sample,
 			"band" = cov_band,
 			"lasso" = cov_lasso)
 
 get_covs <- function(data, est) {
+
 	covs <- array(dim = c(length(type), length(est), 60, 60),
-			dimnames = list(type = type, est = est, rows = 1:60, cols = 1:60))
+			dimnames = list(type = type, est = est, rows = 1:60, cols =
+			1:60))
 
 	for (t in type) {
 		X <- data[data$V61 == t,][, -61]
@@ -50,10 +52,10 @@ get_covs <- function(data, est) {
 }
 
 ### Whole covariances
-#data <- read.table("data/sonar.all-data", sep = ",", header = FALSE)
-#est <- c("sample", "sparse", "sparse_f", "band")
-#covs <- get_covs(data, est)
-#saveRDS(covs, file = "data/covs.rds")
+data <- read.table("data/sonar.all-data", sep = ",", header = FALSE)
+est <- c("sample", "grad_lik", "grad_frob", "band")
+covs <- get_covs(data = data, est = est)
+saveRDS(covs, file = "data/covs.rds")
 
 ### Prediction
 data <- read.table("data/sonar.all-data", sep = ",", header = FALSE)
@@ -64,7 +66,7 @@ data_test <- data[(ntrain + 1):nrow(data), ]
 train_r <- data_train[data_train$V61 == "R", ]
 train_m <- data_train[data_train$V61 == "M", ]
 
-est <- c("sparse_f", "band") # sparse and sample yield non positive definite
+est <- c("grad_frob", "band") # sparse and sample yield non positive definite
 covs <- get_covs(data_train, est)
 
 p_r <- nrow(train_r) / nrow(data_train)

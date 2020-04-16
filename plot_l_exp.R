@@ -56,8 +56,9 @@ get_statistics <- function(p, r) {
 			}
 			for (m in method) {
 				for (l in seq(length(fstat))) {
-					data[i, j, m, l] <- mean(stat_res[, l, m])
-					data_sd[i, j, m, l] <- stats::sd(stat_res[, l, m])/sqrt(r)
+					data[i, j, m, l] <- mean(stat_res[, l, m], na.rm = TRUE)
+					data_sd[i, j, m, l] <- stats::sd(stat_res[, l, m], na.rm =
+					TRUE)/sqrt(r)
 				}
 			}
 		}

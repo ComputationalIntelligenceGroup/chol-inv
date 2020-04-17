@@ -56,18 +56,26 @@ get_statistics <- function(p, r) {
 			}
 			for (m in method) {
 				for (l in seq(length(fstat))) {
-					data[i, j, m, l] <- mean(stat_res[, l, m], na.rm = TRUE)
-					data_sd[i, j, m, l] <- stats::sd(stat_res[, l, m], na.rm =
-					TRUE)/sqrt(r)
+					res <- stat_res[, l, m][!is.na(stat_res[, l, m])]
+
+					if(length(res) == 0) {
+						data[i, j, m, l] <- NA
+						data_sd[i, j, m, l] <- NA
+					} else {
+						data[i, j, m, l] <- mean(res)
+						data_sd[i, j, m, l] <- stats::sd(res)/sqrt(length(res))
+					}
 				}
 			}
 		}
 	}
 	
-	df <- data %>% as.tbl_cube(met_name = "data") %>% as_tibble()
+	df <- data %>% as.tbl_cube(met_name = "data") %>% as_tibble()	
 	df$method<- as.factor(df$method)
 	df_sd <- data_sd %>% as.tbl_cube(met_name = "data_sd") %>% as_tibble()
 	df$data_sd <- df_sd$data_sd
+
+	df <- stats::na.omit(df)
 	
 	return(df)
 }

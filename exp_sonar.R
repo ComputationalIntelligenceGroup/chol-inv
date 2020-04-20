@@ -72,8 +72,8 @@ get_covs_sonar <- function(data) {
 			ntrain <- floor(nrow(X)/2)
 		
 			for (m in names(f_cov)) {
-				mcov <- f_cov[[e]](ntrain, X)
-				saveRDS(covs, file = paste0(dirname, m, "_", t, ".rds"))
+				mcov <- f_cov[[m]](ntrain, X)
+				saveRDS(mcov, file = paste0(dirname, m, "_", t, ".rds"))
 			}
 		}
 	}

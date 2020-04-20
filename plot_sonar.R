@@ -1,8 +1,6 @@
 library("ggplot2")
 library("dplyr")
 
-type <- c("R", "M")
-est <- c("sample", "sparse", "sparse_f", "band", "lasso")
 covs <- readRDS(file = "data/covs.rds")
 
 ### Plot covariance heatmaps
@@ -11,19 +9,22 @@ df$type <- as.factor(df$type)
 df$est <- as.factor(df$est)
 
 pl <- ggplot(df, aes(x = rows, y = cols, z = covs, fill = covs)) +
-	facet_grid(cols = vars(type), rows = vars(est)) +
+	facet_grid(rows = vars(type), cols = vars(est)) +
 	geom_tile() + coord_equal() +
-	geom_contour(color = "white", alpha = 0.75) +
-	scale_fill_distiller(palette = "Spectral", na.value = "white") +
+	geom_raster(alpha = 0.75) +
+	scale_fill_distiller(palette = "Spectral") +
 	theme_bw() +
+	theme(legend.position = "bottom", text = element_text(size = 20)) +
 	xlab("") +
 	ylab("") +
 	ylim(60, 0)
 
 ggsave(filename = paste0("sonar_covs.pdf"), plot = pl, device = "pdf",
-	path = "../sparsecholeskycovariance/img/")
+	path = "../sparsecholeskycovariance/img/", width = 11, height = 6)
 
 ### Plot eigenvalue freqpol (scree plot)
+type <- c("R", "M")
+est <- c("sample", "grad_frob", "grad_lik", "band", "lasso")
 eigens <- array(dim = c(length(type), length(est), 60),
 			dimnames = list(type = type, est = est, value = 1:60))
 			
@@ -40,14 +41,14 @@ df$est <- as.factor(df$est)
 
 pl <- ggplot(df, aes(x = value, y = eigens, group = est, color = est)) +
 	facet_grid(cols = vars(type)) +
-	geom_line() + coord_fixed(ratio = 30) +
+	geom_line() +
 	theme_bw() +
-	theme(legend.position = "bottom") +
+	theme(legend.position = "bottom", text = element_text(size = 20)) +
 	xlab("") +
 	ylab("Eigenvalue") 
 
 ggsave(filename = paste0("sonar_eigens.pdf"), plot = pl, device = "pdf",
-	path = "../sparsecholeskycovariance/img/")
+	path = "../sparsecholeskycovariance/img/", width = 11, height = 5)
 
 
 preds <- readRDS(file = "data/preds.rds")
@@ -72,7 +73,7 @@ stat_f1 <- function(pred, true, val) {
 	return(2*tp/(2*tp + fp + fn))
 }
 
-est <- c("sparse_f", "band")
+est <- c("grad_frob", "band")
 fstat <- c("tpr" = stat_tpr,
 			"tnr" = stat_tnr,
 			 "f1" = stat_f1)

@@ -1,4 +1,4 @@
-source("lib.R")
+source("exp_lib.R")
 
 devtools::install_github("irenecrsn/covchol")
 

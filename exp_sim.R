@@ -1,7 +1,5 @@
 source("exp_lib.R")
 
-devtools::install_github("irenecrsn/covchol")
-
 ####### Rothman exp: for comparison of fixed covariance matrices
 rothman_exp_gen <- function(nodes) {
 	
@@ -99,14 +97,8 @@ l_exp <- function(m, repetition, nodes, n, ntrain) {
 			Lest <- f_chol[[m]](ntrain, X = X)
 			
 			saveRDS(Lest,
-							file = paste0("l_exp/m_", p, "_", d, "_r", repetition, ".rds"))
+					file = paste0("l_exp/", m, "_", p, "_", d, "_r", repetition, ".rds"))
 		}
 	}
-}
-
-execute <- function(r, ename, emethod, ...) {
-	dir.create(ename, showWarnings = FALSE)
-
-	emethod(repetition = r, ...)
 }
 

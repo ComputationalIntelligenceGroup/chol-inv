@@ -1,7 +1,24 @@
-source("plot_lib.R")
+library("ggplot2")
+library("dplyr")
 
-fname <- c("l_exp" = fname_l_exp,
-			"rothman_exp" = fname_rothman_exp)
+method <- c("lasso",
+			"band",
+			"grad_lik",
+			"grad_frob")
+
+stat_norm <- function(mtrue, mest) {
+	return(log(norm(mest - mtrue)))
+}
+stat_f1 <- function(mtrue, mest) {
+	p <- ncol(mtrue)
+	tp <- sum(mtrue != 0 & mest != 0) - p
+	fn <- sum(mtrue != 0 & mest == 0)
+	fp <- sum(mtrue == 0 & mest != 0)
+	return(2*tp/(2*tp + fp + fn))
+}
+
+fstat <- c("norm" = stat_norm,
+		   "f1" = stat_f1)
 
 fname_l_exp <- function(idx, p, m, rep, true = FALSE) {
 	d <- idx/p
@@ -14,12 +31,15 @@ fname_l_exp <- function(idx, p, m, rep, true = FALSE) {
 
 fname_rothman_exp <- function(idx, p, m, rep, true = FALSE) {
 	if (true == TRUE) {
-		return(paste0("rothman_exp/sigma", idx_sigma, "true_", p, ".rds"))
+		return(paste0("rothman_exp/sigma", idx, "true_", p, ".rds"))
 	} else {
-		return(paste0("rothman_exp/sigma", idx_sigma, m, "_", p, "_r", rep, ".rds"))
+		return(paste0("rothman_exp/sigma", idx, m, "_", p, "_r", rep, ".rds"))
 	}
 	return(file)
 }
+
+fname <- c("l_exp" = fname_l_exp,
+			"rothman_exp" = fname_rothman_exp)
 
 get_statistics <- function(p, r, ename) {
 	data <- array(
@@ -37,8 +57,7 @@ get_statistics <- function(p, r, ename) {
  	error <- logical(length(method))
 	names(error) <- method
 	for (i in 1:length(p)) {
-		d <- c(1/p[i], 2/p[i], 3/p[i])
-		for (j in seq_along(d)) {
+		for (j in 1:3) {
 			for (k in 1:r) {
 				for (m in method) {
 					error[m] <- FALSE

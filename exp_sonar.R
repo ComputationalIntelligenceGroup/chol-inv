@@ -4,58 +4,39 @@ devtools::install_github("irenecrsn/covchol")
 
 type <- c("R", "M")
 
-get_covs <- function(data, est) {
-
-	covs <- array(dim = c(length(type), length(est), 60, 60),
-			dimnames = list(type = type, est = est, rows = 1:60, cols =
-			1:60))
-
+gen_chols <- function(data, dirname) {
+	dir.create(dirname, showWarnings = FALSE)
+	
 	for (t in type) {
 		X <- data[data$V61 == t,][, -61]
 		ntrain <- floor(nrow(X)/2)
 		
-		for (e in est) {
-			covs[t, e, ,] <- f_chol[[e]](ntrain, X)
+		for (m in names(f_chol)) {
+			saveRDS(f_chol[[m]](ntrain, X),
+					file = paste0(dirname, m, "_", t, ".rds"))
 		}
 	}
-
-	return(covs)
 }
 
-### Whole covariances
+### Cholesky factor for heatmaps
+#dirname <- "sonar_heat_exp/"
 #data <- read.table("data/sonar.all-data", sep = ",", header = FALSE)
-#covs <- get_covs(data = data, est = names(f_cov))
-#saveRDS(covs, file = "data/covs.rds")
+#gen_covs_heatmap(data = data, dirname = dirname)
 
 ### Prediction: small sample size --> leave one out CV instead of train/test
-dirname <- "sonar_exp/"
 
 # Covariance generation
-get_covs_sonar <- function(data) {
-	dir.create(dirname, showWarnings = FALSE)
-
-	for (n in 1:nrow(data)) {
-		data_train <- data[-n, ]
-
-		for (t in type) {
-			X <- data_train[data_train$V61 == t,][, -61]
-			ntrain <- floor(nrow(X)/2)
-		
-			for (m in names(f_cov)) {
-				L <- f_chol[[m]](ntrain, X)
-				saveRDS(L, file = paste0(dirname, m, "_", t, "_", n, ".rds"))
-			}
-		}
-	}
-}
+dirname <- "sonar_pred_exp/"
+dir.create(dirname, showWarnings = FALSE)
 data <- read.table("data/sonar.all-data", sep = ",", header = FALSE)
-get_covs_sonar(data)
-
-preds <- matrix(nrow = nrow(data), ncol = length(f_cov) + 1,
-			dimnames = list(sample = 1:nrow(data), est = c(names(f_cov), "true")))
+preds <- matrix(nrow = nrow(data), ncol = length(f_chol) + 1,
+			dimnames = list(sample = 1:nrow(data), est = c(names(f_chol), "true")))
 for (n in 1:nrow(data)) {
 	data_train <- data[-n, ]
 	preds[n, "true"] <- data[n, 61]
+	
+	gen_chols(data = data_train, dirname = paste0(dirname, n, "/"))
+
 	train_r <- data_train[data_train$V61 == "R", ][, -61]
 	train_m <- data_train[data_train$V61 == "M", ][, -61]
 
@@ -68,8 +49,8 @@ for (n in 1:nrow(data)) {
 	for (m in names(f_cov)) {
 		tryCatch(
 		{
-			l_r <- readRDS(file = paste0(dirname, m, "_R_", n, ".rds"))
-			l_m <- readRDS(file = paste0(dirname, m, "_M_", n, ".rds"))
+			l_r <- readRDS(file = paste0(dirname, n, "/",  m, "_R_", n, ".rds"))
+			l_m <- readRDS(file = paste0(dirname, n, "/",  m, "_M_", n, ".rds"))
 			
 			x <- as.matrix(data[n, ][, -61])
 			h_r <- forwardsolve(l_r, t(x - mean_r))

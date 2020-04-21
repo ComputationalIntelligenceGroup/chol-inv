@@ -104,7 +104,7 @@ for (n in 1:nrow(data)) {
 			O_r <- solve(cov_r)
 			O_m <- solve(cov_m)
 		
-			x <- data[n, ][, -61]
+			x <- as.matrix(data[n, ][, -61])
 			ll_r <-  -0.5*log(det(O_r))  - 0.5 * 
             	   t(x - mean_r) %*% O_r %*% (x - mean_r)  + log(p_r)
 			ll_m <-  -0.5*log(det(O_m))  - 0.5 * 

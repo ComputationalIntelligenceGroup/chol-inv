@@ -1,29 +1,25 @@
-source("nestedlasso.r")
 source("lasso.r")
 
-# Returns an estimate of the Cholesky factor
 gradient_est <- function(ntrain, X) {
 	
 	n <- nrow(X)
 
-	#Covtest <- cov(X[(ntrain + 1):n,])
 	datatest <-  scale(X[(ntrain+1):n,], center = TRUE, scale = FALSE) 
+	
 	llpath <- covchol::cholpath(X = X[1:ntrain,])
-	frobs <- lapply(
+	lls <- lapply(
 		X = llpath,
 		FUN = function(res) {
 		  h <- forwardsolve(res$L, t(datatest))
-			#norm(res$L %*% t(res$L) - Covtest, type = "F")
-		  2*sum(log(diag(res$L))) + sum(crossprod(h))
+		  sum(log(diag(res$L))) + sum(crossprod(h))
 		}
 	)
 	
-	Lest <- llpath[[which.min(frobs)]]$L
+	Lest <- llpath[[which.min(lls)]]$L
 	
 	return(Lest)
 }
 
-# Returns an estimate of the Cholesky factor
 gradient_est_f <- function(ntrain, X) {
 	
 	n <- nrow(X)
@@ -43,51 +39,36 @@ gradient_est_f <- function(ntrain, X) {
 	return(Lest)
 }
 
-# Returns an estimate of the covariance matrix
 band_est <- function(ntrain, X) {
 
 	Sigmaest <- PDSCE::band.chol.cv(x = X, n.tr = ntrain, nsplits = 1)$sigma
 	
-	return(Sigmaest)
+	return(chol(Sigmaest))
 }
 
-# Returns an estimate of the Cholesky factor
-nestedlasso_est <- function(ntrain, X) {
-	
-	n <- nrow(X)
-	
-	Covtest <- cov(X[(ntrain + 1):n,])
-	
-	llpath <- nested.lasso.path(X = X[1:ntrain,])
-	frobs <- lapply(
-		X = llpath,
-		FUN = function(res) {
-			norm(res$sigma - Covtest, type = "F")
-		}
-	)
-	
-	selected <- llpath[[which.min(frobs)]]
-	Lest <- selected$cholesky %*% diag(sqrt(selected$sigma2))
-	
-	return(Lest)
-}
-
-# Returns an estimate of the Cholesky factor
 lasso_est <- function(ntrain, X) {
 	n <- nrow(X)
 	
-	Covtest <- cov(X[(ntrain + 1):n,])
+	datatest <-  scale(X[(ntrain+1):n,], center = TRUE, scale = FALSE) 
 	
 	llpath <- lasso.path(X = X[1:ntrain,])
-	frobs <- lapply(
+	lls <- lapply(
 		X = llpath,
 		FUN = function(res) {
-			norm(res$sigma - Covtest, type = "F")
+		  L <- res$cholesky %*% diag(sqrt(res$sigma2))
+		  h <- forwardsolve(L, t(datatest))
+		  sum(log(diag(L))) + sum(crossprod(h))
 		}
 	)
 	
-	selected <- llpath[[which.min(frobs)]]
+	selected <- llpath[[which.min(lls)]]
 	Lest <- selected$cholesky %*% diag(sqrt(selected$sigma2))
 	
 	return(Lest)
 }
+
+f_chol <- c("grad_lik" = gradient_est,
+			"grad_frob" = gradient_est_f,
+			"band" = band_est,
+			"lasso" = lasso_est)
+

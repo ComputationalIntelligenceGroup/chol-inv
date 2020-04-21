@@ -32,8 +32,6 @@ preds <- matrix(nrow = nrow(data), ncol = length(f_chol) + 1,
 for (n in 1:nrow(data)) {
 	data_train <- data[-n, ]
 	preds[n, "true"] <- data[n, 61]
-	
-	gen_chols(data = data_train, dirname = paste0(dirname, n, "/"))
 
 	train_r <- data_train[data_train$V61 == "R", ][, -61]
 	train_m <- data_train[data_train$V61 == "M", ][, -61]
@@ -44,6 +42,7 @@ for (n in 1:nrow(data)) {
 	mean_r <- colMeans(train_r)
 	mean_m <- colMeans(train_m)
 
+	#gen_chols(data = data_train, dirname = paste0(dirname, n, "/"))
 	for (m in names(f_chol)) {
 		tryCatch(
 		{

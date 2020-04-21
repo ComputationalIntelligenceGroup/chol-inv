@@ -44,11 +44,11 @@ fname <- c("l_exp" = fname_l_exp,
 get_statistics <- function(p, r, ename) {
 	data <- array(
 		dim = c(length(p), 3, length(method), length(fstat)),
-		dimnames = list(p = p, d = 1:3, method = method, fstat = names(fstat))
+		dimnames = list(p = p, scenario = 1:3, method = method, fstat = names(fstat))
 	)
 	data_se <- array(
 		dim = c(length(p), 3, length(method), length(fstat)),
-		dimnames = list(p = p, d = 1:3, method = method, fstat = names(fstat))
+		dimnames = list(p = p, scenario = 1:3, method = method, fstat = names(fstat))
 	)
 	stat_res <- array(
 		dim = c(r, length(fstat), length(method)),
@@ -116,8 +116,9 @@ lab <- c("l_exp" = lab_densities,
 plot_statistics <- function(df, ename) {
 	
 	pl <- ggplot(df, aes(x = p, y = data, group = method)) +
-		facet_grid(cols = vars(d), rows = vars(fstat), 
-							 labeller = labeller(fstat = toupper, d = lab[ename]),
+		facet_grid(cols = vars(scenario), rows = vars(fstat), 
+							 labeller = labeller(fstat = toupper, 
+							 scenario = lab[[ename]]),
 							 scales = "free") +
 		geom_line(aes(color = method)) +
 		geom_point(aes(color = method)) +

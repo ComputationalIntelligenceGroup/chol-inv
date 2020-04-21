@@ -1,7 +1,5 @@
 source("exp_lib.R")
 
-devtools::install_github("irenecrsn/covchol")
-
 type <- c("R", "M")
 
 gen_chols <- function(data, dirname) {
@@ -46,7 +44,7 @@ for (n in 1:nrow(data)) {
 	mean_r <- colMeans(train_r)
 	mean_m <- colMeans(train_m)
 
-	for (m in names(f_cov)) {
+	for (m in names(f_chol)) {
 		tryCatch(
 		{
 			l_r <- readRDS(file = paste0(dirname, n, "/",  m, "_R_", n, ".rds"))

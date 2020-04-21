@@ -6,12 +6,14 @@ type <- c("R", "M")
 
 cov_sparse <- function(ntrain, X) {
 	Lest <- gradient_est(ntrain = ntrain, X)
-	return(Lest %*% t(Lest))
+	#return(Lest %*% t(Lest))
+	return(Lest)
 }
 
 cov_sparse_f <- function(ntrain, X) {
 	Lest <- gradient_est_f(ntrain = ntrain, X)
-	return(Lest %*% t(Lest))
+	#return(Lest %*% t(Lest))
+	return(Lest)
 }
 
 cov_sample <- function(ntrain, X) {
@@ -19,12 +21,13 @@ cov_sample <- function(ntrain, X) {
 }
 
 cov_band <- function(ntrain, X) {
-	return(band_est(ntrain = ntrain, X = X))
+	return(chol(band_est(ntrain = ntrain, X = X)))
 }
 
 cov_lasso <- function(ntrain, X) {
 	Lest <- lasso_est(ntrain = ntrain, X)
-	return(Lest %*% t(Lest))
+	#return(Lest %*% t(Lest))
+	return(Lest)
 }
 
 f_cov <- c("grad_lik" = cov_sparse,
@@ -98,17 +101,17 @@ for (n in 1:nrow(data)) {
 	for (m in names(f_cov)) {
 		tryCatch(
 		{
-			cov_r <- readRDS(file = paste0(dirname, m, "_R_", n, ".rds"))
-			cov_m <- readRDS(file = paste0(dirname, m, "_M_", n, ".rds"))
+			l_r <- readRDS(file = paste0(dirname, m, "_R_", n, ".rds"))
+			l_m <- readRDS(file = paste0(dirname, m, "_M_", n, ".rds"))
 			
-			O_r <- solve(cov_r)
-			O_m <- solve(cov_m)
+			#O_r <- solve(cov_r)
+			#O_m <- solve(cov_m)
 		
 			x <- as.matrix(data[n, ][, -61])
-			ll_r <-  -0.5*log(det(O_r))  - 0.5 * 
-            	   t(x - mean_r) %*% O_r %*% (x - mean_r)  + log(p_r)
-			ll_m <-  -0.5*log(det(O_m))  - 0.5 * 
-  					t(x - mean_m) %*% O_m %*% (x - mean_m)  + log(p_m)
+			h_r <- forwardsolve(l_r, t(x - mean_r))
+			h_m <- forwardsolve(l_m, t(x - mean_m))
+			ll_r <-  -sum(log(diag(l_r)))  - 0.5 * crossprod(h_r)  + log(p_r)
+			ll_m <-  -sum(log(diag(l_m)))  - 0.5 * crossprod(h_m)  + log(p_m)
  
 			if (ll_r < ll_m) {
 				preds[n, m] <- "M"

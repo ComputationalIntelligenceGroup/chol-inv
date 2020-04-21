@@ -6,13 +6,15 @@ gradient_est <- function(ntrain, X) {
 	
 	n <- nrow(X)
 
-	Covtest <- cov(X[(ntrain + 1):n,])
-	
+	#Covtest <- cov(X[(ntrain + 1):n,])
+	datatest <-  scale(X[(ntrain+1):n,], center = TRUE, scale = FALSE) 
 	llpath <- covchol::cholpath(X = X[1:ntrain,])
 	frobs <- lapply(
 		X = llpath,
 		FUN = function(res) {
-			norm(res$L %*% t(res$L) - Covtest, type = "F")
+		  h <- forwardsolve(res$L, t(datatest))
+			#norm(res$L %*% t(res$L) - Covtest, type = "F")
+		  2*sum(log(diag(res$L))) + sum(crossprod(h))
 		}
 	)
 	

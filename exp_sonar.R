@@ -73,16 +73,16 @@ get_covs_sonar <- function(data) {
 		
 			for (m in names(f_cov)) {
 				mcov <- f_cov[[m]](ntrain, X)
-				saveRDS(mcov, file = paste0(dirname, m, "_", t, ".rds"))
+				saveRDS(mcov, file = paste0(dirname, m, "_", t, "_", n, ".rds"))
 			}
 		}
 	}
 }
 data <- read.table("data/sonar.all-data", sep = ",", header = FALSE)
-get_covs_sonar(data)
+#get_covs_sonar(data)
 
 preds <- matrix(nrow = nrow(data), ncol = length(f_cov) + 1,
-			dimnames = list(sample = 1:nrow(data), est = c(est, "true")))
+			dimnames = list(sample = 1:nrow(data), est = c(names(f_cov), "true")))
 for (n in 1:nrow(data)) {
 	data_train <- data[-n, ]
 	preds[n, "true"] <- data[n, 61]
@@ -98,8 +98,8 @@ for (n in 1:nrow(data)) {
 	for (m in names(f_cov)) {
 		tryCatch(
 		{
-			cov_r <- readRDS(file = paste0(dirname, m, "_R.rds"))
-			cov_m <- readRDS(file = paste0(dirname, m, "_M.rds"))
+			cov_r <- readRDS(file = paste0(dirname, m, "_R_", n, ".rds"))
+			cov_m <- readRDS(file = paste0(dirname, m, "_M_", n, ".rds"))
 			
 			O_r <- solve(cov_r)
 			O_m <- solve(cov_m)

@@ -43,7 +43,7 @@ band_est <- function(ntrain, X) {
 
 	Sigmaest <- PDSCE::band.chol.cv(x = X, n.tr = ntrain, nsplits = 1)$sigma
 	
-	return(chol(Sigmaest))
+	return(t(chol(Sigmaest)))
 }
 
 lasso_est <- function(ntrain, X) {

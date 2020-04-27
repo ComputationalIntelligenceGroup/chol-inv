@@ -75,6 +75,8 @@ rothman_exp <- function(m, repetition, nodes, n, ntrain) {
 
 ####### L exp: for comparison of l factors
 l_exp_gen <- function(repetition, nodes) {
+	dir.create("l_exp", showWarnings = FALSE)
+	
 	for (p in nodes) {
 		densities <- c(1/p, 2/p, 3/p)
 		for (d in densities) {

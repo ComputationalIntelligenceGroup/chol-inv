@@ -2,9 +2,8 @@ source("exp_lib.R")
 
 sonar_data <- read.table("data/sonar.all-data", sep = ",", header = FALSE)
 gen_chols <- function(data, dirname) {
-	dir.create(dirname, showWarnings = FALSE)
-
 	type <- levels(data$V61)
+
 	for (t in type) {
 		X <- data[data$V61 == t,][, -61]
 		ntrain <- floor(nrow(X)/2)
@@ -30,8 +29,10 @@ prediction <- function(data) {
 
 		mean_r <- colMeans(train_r)
 		mean_m <- colMeans(train_m)
-
-		#gen_chols(data = data_train, dirname = paste0(dirname, n, "/"))
+		
+		subdirname <- paste0(dirname, n, "/")
+		dir.create(subdirname, showWarnings = FALSE)
+		gen_chols(data = data_train, dirname = subdirname)
 		for (m in names(f_chol)) {
 			l_r <- readRDS(file = paste0(dirname, n, "/",  m, "_R.rds"))
 			l_m <- readRDS(file = paste0(dirname, n, "/",  m, "_M.rds"))
@@ -49,16 +50,19 @@ prediction <- function(data) {
 			}
 		}
 	}
+
+	return(preds)
 }
 
 
 ### Cholesky factor for heatmaps
-dirname <- "sonar_heat_exp/"
-gen_chols(data = sonar_data, dirname = dirname)
+#dirname <- "sonar_heat_exp/"
+#dir.create(dirname, showWarnings = FALSE)
+#gen_chols(data = sonar_data, dirname = dirname)
 
 ### Prediction: small sample size --> leave one out CV instead of train/test
-#dirname <- "sonar_pred_exp/"
-#dir.create(dirname, showWarnings = FALSE)
-#preds <- prediction(data = sonar_data)
-#saveRDS(preds, file = "data/preds.rds")
+dirname <- "sonar_pred_exp/"
+dir.create(dirname, showWarnings = FALSE)
+preds <- prediction(data = sonar_data)
+saveRDS(preds, file = "data/preds.rds")
 

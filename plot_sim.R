@@ -136,7 +136,7 @@ plot_statistics <- function(df, ename) {
 }
 
 r <- 50
-p <- c(30, 100, 200, 500, 1000)
+p <- c(30, 100, 200, 500)
 for (ename in names(fname)) {
 	df <- get_statistics(p = p, r = r, ename = ename)
 	pl <- plot_statistics(df, ename = ename)

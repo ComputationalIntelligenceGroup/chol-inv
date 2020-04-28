@@ -3,9 +3,9 @@ library("dplyr")
 
 source("real_lib.R")
 
-method <- c("grad_lik",
+method <- c("band",
 			"grad_frob",
-			"band",
+			"grad_lik",
 			"lasso")
 
 get_choleskys <- function(dirname) {
@@ -44,8 +44,8 @@ plot_heatmaps <- function(chols, fname) {
 		path = "../sparsecholeskycovariance/img/", width = 11, height = 6)
 }
 plot_scree <- function(chols) {
-	eigens <- array(dim = c(length(type), length(method), 60),
-			dimnames = list(type = type, method = method, value = 1:60))
+	eigens <- array(dim = c(length(type), length(method), class - 1),
+			dimnames = list(type = type, method = method, value = 1:(class - 1)))
 			
 	for (t in type) {
 		for (m in method) {
@@ -87,7 +87,6 @@ plot_heatmaps(covs, fname = paste0(exp, "_covs"))
 plot_scree(chols)
 
 ### Generate predictions
-preds <- readRDS(file = paste0("data/", exp, "_preds.rds"))
 stat_tpr <- function(pred, true, t) {
 	if (sum(true == t) == 0) {
 		return(1)
@@ -100,7 +99,7 @@ stat_tnr <- function(pred, true, t) {
 		return(1)
 	}
 	tn <- sum(true != t & pred != t)
-	return(tn/sum(true == t))
+	return(tn/sum(true != t))
 }
 stat_f1 <- function(pred, true, t) {
 	tp <- sum(true == t & pred == t)
@@ -109,23 +108,23 @@ stat_f1 <- function(pred, true, t) {
 	return(2*tp/(2*tp + fp + fn))
 }
 
-fstat <- c("tpr" = stat_tpr,
-			"tnr" = stat_tnr,
-			 "f1" = stat_f1)
+fstat <- c("tnr" = stat_tnr,
+		   "f1" = stat_f1)
 stat <- array(
-	dim = c(length(type), length(fstat), length(method)),
-	dimnames = list(type = type, fstat = names(fstat), method = method)
+	dim = c(length(fstat), length(method), length(type)),
+	dimnames = list(fstat = names(fstat), method = method, type = type)
 )
+preds <- readRDS(file = paste0("data/", exp, "_preds.rds"))
 
-for (m in method) {
-	for (f in names(fstat)) {
-		for (i in 1:length(type)) {
-			stat[type[i], f, m] <- fstat[[f]](pred = preds[, m], 
+for (i in 1:length(type)) {
+	for (m in method) {
+		for (f in names(fstat)) {
+			stat[f, m, type[i]] <- fstat[[f]](pred = preds[, m], 
 										true = preds[, "true"],
 										t = i)
 		}
 	}
 }
-
+print(stat)
 saveRDS(stat, file = paste0("data/", exp, "_stat_preds.rds"))
 

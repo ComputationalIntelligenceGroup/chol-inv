@@ -1,4 +1,4 @@
-exp <- "sonar" # one of sonar or robot
+exp <- "robot" # one of sonar or robot
 
 filename <- c(sonar = "sonar.all-data",
 			  robot = "sensor_readings_24.data")

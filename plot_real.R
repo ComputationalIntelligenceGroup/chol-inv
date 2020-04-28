@@ -38,10 +38,11 @@ plot_heatmaps <- function(chols, fname) {
 		theme(legend.position = "bottom", text = element_text(size = 20)) +
 		xlab("") +
 		ylab("") +
-		ylim(60, 0)
+		ylim(class, 0)
 
 	ggsave(filename = paste0(fname, ".pdf"), plot = pl, device = "pdf",
-		path = "../sparsecholeskycovariance/img/", width = 11, height = 6)
+		path = "../sparsecholeskycovariance/img/", width = 11, height =
+		3*length(type))
 }
 plot_scree <- function(chols) {
 	eigens <- array(dim = c(length(type), length(method), class - 1),
@@ -67,7 +68,7 @@ plot_scree <- function(chols) {
 		xlab("") +
 		ylab("Eigenvalue") 
 
-	ggsave(filename = paste0("sonar_eigens.pdf"), plot = pl, device = "pdf",
+	ggsave(filename = paste0(exp, "_eigen.pdf"), plot = pl, device = "pdf",
 		path = "../sparsecholeskycovariance/img/", width = 11, height = 5)
 }
 

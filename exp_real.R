@@ -1,14 +1,7 @@
 source("exp_lib.R")
+source("real_lib.R")
 
-exp <- "robot" # one of sonar or robot
-
-filename <- c(sonar = "sonar.all-data",
-			  robot = "sensor_readings_24.data")
-
-data <- read.table(paste0("data/", filename[exp]), sep = ",", header = FALSE)
 gen_chols <- function(data, dirname) {
-	class <- ncol(data)
-	type <- levels(data[, class])
 
 	for (t in type) {
 		X <- data[data[, class] == t,][, -class]
@@ -24,13 +17,8 @@ prediction <- function(data) {
 	preds <- matrix(nrow = nrow(data), ncol = length(f_chol) + 1,
 				dimnames = list(sample = 1:nrow(data), est = c(names(f_chol), "true")))
 	
-	class <- ncol(data)
-	
-	type <- levels(data[, class])
-	
 	ll <- numeric(length(type))
 	names(ll) <- type
-	
 	
 	for (n in 1:nrow(data)) {
 		data_train <- data[-n, ]

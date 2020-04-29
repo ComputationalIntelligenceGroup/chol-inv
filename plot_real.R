@@ -88,12 +88,9 @@ plot_heatmaps(covs, fname = paste0(exp, "_covs"))
 plot_scree(chols)
 
 ### Generate predictions
-stat_tpr <- function(pred, true, t) {
-	if (sum(true == t) == 0) {
-		return(1)
-	}
-	tp <- sum(true == t & pred == t)
-	return(tp/(sum(true == t)))
+stat_acc <- function(pred, true, t) {
+	# t is ignored
+	return(length(which((true == pred)))/length(true))
 }
 stat_tnr <- function(pred, true, t) {
 	if (sum(true != t) == 0) {
@@ -110,6 +107,7 @@ stat_f1 <- function(pred, true, t) {
 }
 
 fstat <- c("tnr" = stat_tnr,
+		   "acc" = stat_acc,
 		   "f1" = stat_f1)
 stat <- array(
 	dim = c(length(fstat), length(method), length(type)),
